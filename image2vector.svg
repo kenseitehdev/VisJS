@@ -1,0 +1,17 @@
+<svg width="50" height="50" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    svg {
+      margin-left: 10px; 
+      margin-right: 10px;
+    }
+    .background { fill: white; opacity: 0.2; } /* 20% opacity */
+    .icon { fill: royalblue; } /* Teal */
+    .accent { fill: darkblue; } /* Light Teal */
+  </style>
+  <!-- Background Circle -->
+  <circle cx="50" cy="50" r="50" class="background" />
+  <!-- Main Icon: Enlarged Simplified V -->
+  <path class="icon" d="M25 25 L50 75 L75 25 Z" />
+  <!-- Accent Lines -->
+  <path class="accent" d="M25 25 L50 50 L75 25 Z" />
+</svg>
