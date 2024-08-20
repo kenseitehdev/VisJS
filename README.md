@@ -196,9 +196,9 @@ Vis.createApp('app-root', [{ name: 'my-component' }]);
 
 ```javascript
 const state = Vis.Hook.State.manageState('initial value');
-Use Lifecycle Hooks
-Register lifecycle hooks for your components:
 ```
+### Use Lifecycle Hooks
+#### Register lifecycle hooks for your components:
 
 ```javascript
 Vis.Hook.Lifecycle.manageCreated(myComponent, () => {
