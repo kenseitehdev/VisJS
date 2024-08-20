@@ -75,7 +75,7 @@ Vis.Component.createComponent({
         </svg>
       </div>
       <div class="title">Welcome to Your Vis.js App</div>
-      <div class="description">Edit <code> src/App.ts </code> to start</div>
+      <div class="description">Edit <code> src/app.js </code> to start</div>
       <div class="btn-group my-2">
         <button class="button" v-on:click="handleStartClick">Get Started</button>
         <button class="button" v-on:click="handleStartClick">Read the Docs</button>
