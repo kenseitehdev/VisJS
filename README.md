@@ -2,6 +2,11 @@
 
 **VisJS** is an ultra-lightweight, robust frontend framework inspired by VueJS, ReactJS, AlpineJS, and Flask. It provides a minimalistic approach to building modern web applications with reactive components and a clear separation of concerns.
 
+## Screenshots
+
+
+![image](https://github.com/user-attachments/assets/043dadae-d4aa-46d5-a287-7e54dd627e7d)
+
 ## Features
 
 ### Directives
@@ -211,5 +216,4 @@ Vis.Hook.Effect.manageEffect(() => {
 
 ```
 
-![image](https://github.com/user-attachments/assets/043dadae-d4aa-46d5-a287-7e54dd627e7d)
 
