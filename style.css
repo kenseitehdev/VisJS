@@ -3,7 +3,6 @@ body, html {
   width: 100%;
   padding:0px;
   margin:0px;
-  overflow:hidden;
 }
 .hidden{
 display:none;
