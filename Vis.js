@@ -328,7 +328,7 @@ function createComponent(config) {
     }
     render() {
       const templateString = this.interpolateTemplate(template);
-      this.shadowRoot.innerHTML = `
+      this.shadowRoot.innerHTML= `
         <style>${styles}</style>
         ${templateString}
       `;

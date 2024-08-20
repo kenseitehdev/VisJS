@@ -36,16 +36,10 @@ Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
     todoList: [
-      " 1. Improved Integrated Templating System",
-        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; a. created lifecycle function",
-        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; b. mounted lifecycle function",
-        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; c. updated lifecycle function",
-        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; d. destroyed lifecycle function",
-        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; e. v-bind for this.data",
-      "  2. Integrated Global State Management, Local State Management and State Persistence",
-      "  3. Integrated Complex Nested Loops and Conditional Rendering Support",
-      "  4. Integrated XSS Protection, CSP, and Input Sanitization",
-      "  5. Integrated Debugging Tools"
+      "  1. Integrated Global State Management, Local State Management and State Persistence",
+      "  2. Integrated Complex Nested Loops and Conditional Rendering Support",
+      "  3. Integrated XSS Protection, CSP, and Input Sanitization",
+      "  4. Integrated Debugging Tools"
     ],
     showAlert: true
   }),
