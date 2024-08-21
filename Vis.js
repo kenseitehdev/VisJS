@@ -22,7 +22,6 @@ function createApp(location, components) {
     console.error(`Element with ID ${location} not found.`);
     return;
   }
-
   components.forEach(({ name }) => {
     const componentElement = createCustomElement(name);
     appRoot.appendChild(componentElement);
@@ -75,18 +74,18 @@ function manageRef(initialValue) {
   let refValue = initialValue;
   return {
     get: () => refValue,
-    set: (value) => { refValue = value; },
+    set: value => { refValue = value; },
   };
 }
 function manageMemo(memoCallback, dependencies = []) {
   let memoValue = null;
   let previousDependencies = [];
-  const hasDependenciesChanged = () => {
-    return !dependencies.every((dep, index) => dep === previousDependencies[index]);
-  };
+  const hasDependenciesChanged = () => 
+    dependencies.length !== previousDependencies.length ||
+    dependencies.some((dep, index) => dep !== previousDependencies[index]);
   const updateMemo = () => {
     if (hasDependenciesChanged()) {
-      previousDependencies = dependencies.slice();
+      previousDependencies = [...dependencies];
       memoValue = memoCallback();
     }
   };
@@ -97,45 +96,25 @@ function manageMemo(memoCallback, dependencies = []) {
   };
 }
 function manageCallback(callback, dependencies = []) {
-  let memoCallback = callback;
   let previousDependencies = [];
-  const hasDependenciesChanged = () => {
-    if (dependencies.length !== previousDependencies.length) {
-      return true;
-    }
-    return dependencies.some((dep, index) => dep !== previousDependencies[index]);
-  };
-  if (hasDependenciesChanged()) {
-    previousDependencies = [...dependencies]; 
-    memoCallback = callback;
+  const hasDependenciesChanged = dependencies.length !== previousDependencies.length || 
+    dependencies.some((dep, index) => dep !== previousDependencies[index]);
+  if (hasDependenciesChanged) {
+    previousDependencies = [...dependencies];
+    return callback;
   }
-  return memoCallback;
+  return () => {}; 
 }
-function manageCreated(component, callback) {
-    component.lifecycle.created.push(callback);
-    if (!component.hasBeenCreated) {
-        component.hasBeenCreated = true;
-        component.lifecycle.created.forEach(fn => fn.call(component));
-    }
+function manageLifecycle(component, lifecycleType, callback) {
+  component.lifecycle[lifecycleType].push(callback);
+  if (component[`is${lifecycleType.charAt(0).toUpperCase() + lifecycleType.slice(1)}`]) {
+    callback.call(component);
+  }
 }
-function manageMounted(component, callback) {
-    component.lifecycle.mounted.push(callback);
-    if (component.isMounted) {
-        callback.call(component);
-    }
-}
-function manageUpdated(component, callback) {
-    component.lifecycle.updated.push(callback);
-    if (component.isUpdated) {
-        callback.call(component);
-    }
-}
-function manageDestroyed(component, callback) {
-    component.lifecycle.destroyed.push(callback);
-    if (component.isDestroyed) {
-        callback.call(component);
-    }
-}
+const manageCreated = (component, callback) => manageLifecycle(component, 'created', callback);
+const manageMounted = (component, callback) => manageLifecycle(component, 'mounted', callback);
+const manageUpdated = (component, callback) => manageLifecycle(component, 'updated', callback);
+const manageDestroyed = (component, callback) => manageLifecycle(component, 'destroyed', callback);
 function bindStateAndEvents(root) {
   const content = root.shadowRoot || root;
   const ifElements = content.querySelectorAll('[v-if], [v-else]');
@@ -251,17 +230,8 @@ class CustomComponent extends HTMLElement {
     this.isUpdated = false;
     this.isDestroyed = false;
   }
-  }
   connectedCallback() {
-    if (!this.isCreated) {
-      this.isCreated = true;
-      this.manageLifecycle('created');
-    }
-    if (!this.isMounted) {
-      this.isMounted = true;
-      this.manageLifecycle('mounted');
-    }
-    this.render();:window
+    this.render();
     this.bindEvents();
   }
   render() {
@@ -286,7 +256,6 @@ class CustomComponent extends HTMLElement {
       const condition = el.getAttribute('v-if');
       el.style.display = this.evaluateCondition(condition) ? 'block' : 'none';
     });
-
     shadowRoot.querySelectorAll('[v-else]').forEach(el => {
       const prevEl = el.previousElementSibling;
       if (prevEl && prevEl.hasAttribute('v-if')) {
@@ -368,7 +337,6 @@ function createComponent(config) {
       });
       interpolated = this.processVIfElse(interpolated);
       interpolated = this.processVFor(interpolated);
-
       return interpolated;
     }
     processVIfElse(template) {
@@ -393,7 +361,6 @@ function createComponent(config) {
         if (vForAttr) {
           const [item, listName] = vForAttr.split(' in ').map(str => str.trim());
           const items = this.state[listName] || [];
-
           const templateContent = el.innerHTML.trim();
           el.innerHTML = '';
           items.forEach(itemData => {
@@ -418,34 +385,14 @@ function createComponent(config) {
   }
   customElements.define(name, Component);
 }
-const State={
-  manageState,
-  manageRef
-}
-const Effect={
-  manageEffect,
-  manageMemo,
-  manageCallback,
-}
-const Lifecycle={
-  manageCreated,
-  manageMounted,
-  manageUpdated,
-  manageDestroyed
-}
-const Hook={
-  State,
-  Effect,
-  Lifecycle
-}
-const Component = {
-  createComponent,
-  render: (component) => component.tagName,
-  update,
-  Hook
+const State = { manageState, manageRef };
+const Effect = { manageEffect, manageMemo, manageCallback };
+const Lifecycle = { manageCreated, manageMounted, manageUpdated, manageDestroyed };
+const Component = { 
+  createComponent, 
+  render: component => component.tagName, 
+  update, 
+  Hook: { State, Effect, Lifecycle }
 };
-const Vis = {
-  createApp,
-  Component,
-};
+const Vis = { createApp, Component };
 export {Vis};
