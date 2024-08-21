@@ -20,5 +20,8 @@
     "VisJS"
   ],
   "author": "Jay Kumar",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "navigo": "^8.11.1"
+  }
 }

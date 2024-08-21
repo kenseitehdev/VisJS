@@ -30,11 +30,6 @@ function createApp(location, components) {
   bindStateAndEvents(appRoot);
   return appRoot;
 }
-function create(template, styling, tagName) {
-  const el=`<style>${styling}</style> ${template}`
-  defineCustomElement(tagName, el);
-  return { tagName };
-}
 function update (){
   console.log("update");
 }
@@ -305,15 +300,35 @@ class CustomComponent extends HTMLElement {
     try {
       return new Function('return ' + condition).call(this.state);
     } catch (e) {
-      console.error('Error evaluating condition:', condition, e);
+    this.showError('Error evaluating condition: ' + condition);
       return false;
+    }
+  }
+    showError(message) {
+    const shadowRoot = this.shadowRoot;
+    const errorElement = shadowRoot.querySelector('.error-modal');
+    if (errorElement) {
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    } else {
+      const errorModal = document.createElement('div');
+      errorModal.className = 'error-modal';
+      errorModal.textContent = message;
+      errorModal.style.position = 'fixed';
+      errorModal.style.top = '10px';
+      errorModal.style.right = '10px';
+      errorModal.style.padding = '10px';
+      errorModal.style.backgroundColor = 'red';
+      errorModal.style.color = 'white';
+      errorModal.style.borderRadius = '5px';
+      shadowRoot.appendChild(errorModal);
     }
   }
   bindEvents() {
   }
 }
 function createComponent(config) {
-  const { name, data, template, methods = {}, styles = "" } = config;
+  const { name, data, template, methods,dependencies = {}, styles = "" } = config;
   class Component extends HTMLElement {
     constructor() {
       super();
@@ -411,7 +426,6 @@ const Hook={
   Lifecycle
 }
 const Component = {
-  create,
   createComponent,
   render: (component) => component.tagName,
   update,

@@ -30,16 +30,18 @@ Vis.Component.createComponent({
     }`
 });
 
-
-
 Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
     todoList: [
-      "  1. Integrated Global State Management, Local State Management and State Persistence",
-      "  2. Integrated Complex Nested Loops and Conditional Rendering Support",
-      "  3. Integrated XSS Protection, CSP, and Input Sanitization",
-      "  4. Integrated Debugging Tools"
+    "1. Simplification of API – Create a straightforward API to make further integration easier.",
+    "2. Implement integrated Complex Nested Loops – Handle complex nested loops in rendering or data processing.",
+    "3. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
+    "4. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
+    "5. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
+    "6. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
+    "7. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization."
+
     ],
     showAlert: true
   }),
