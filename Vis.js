@@ -246,9 +246,22 @@ class CustomComponent extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this.isCreated = false;
+    this.isMounted = false;
+    this.isUpdated = false;
+    this.isDestroyed = false;
+  }
   }
   connectedCallback() {
-    this.render();
+    if (!this.isCreated) {
+      this.isCreated = true;
+      this.manageLifecycle('created');
+    }
+    if (!this.isMounted) {
+      this.isMounted = true;
+      this.manageLifecycle('mounted');
+    }
+    this.render();:window
     this.bindEvents();
   }
   render() {
