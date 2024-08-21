@@ -34,13 +34,22 @@ Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
     todoList: [
-    "1. Simplification of API – Create a straightforward API to make further integration easier.",
-    "2. Implement integrated Complex Nested Loops – Handle complex nested loops in rendering or data processing.",
-    "3. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
-    "4. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
-    "5. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
-    "6. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
-    "7. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization."
+    "1. Line by line organization, analysis, efficient refactor and improvement",
+    "2. Simplification of API – Create a straightforward API to make further integration easier.",
+    "3. Implement integrated Complex Nested Loops – Handle complex nested loops in rendering or data processing.",
+    "4. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
+    "5. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
+    "6. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
+    "7. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
+    "8. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.",
+    "9. Develop and organize state",
+    "10. type checking",
+    "11. add VDOM to shadow dom",
+    "12. make framework modular",
+    "12. Develop error handling more",
+    "13. Develop State Persistence",
+    "14. Optimize rendering",
+    "15. Integrate lifesystem in Component"
 
     ],
     showAlert: true

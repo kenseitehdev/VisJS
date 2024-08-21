@@ -385,14 +385,34 @@ function createComponent(config) {
   }
   customElements.define(name, Component);
 }
-const State = { manageState, manageRef };
-const Effect = { manageEffect, manageMemo, manageCallback };
-const Lifecycle = { manageCreated, manageMounted, manageUpdated, manageDestroyed };
+const Lifecycle = { 
+    manageCreated, 
+    manageMounted, 
+    manageUpdated, 
+    manageDestroyed 
+};
+const Effect = { 
+    manageEffect, 
+    manageMemo, 
+    manageCallback 
+};
+const State = { 
+    manageState, 
+    manageRef 
+};
+const Hook={
+    State, 
+    Effect, 
+    Lifecycle 
+}
 const Component = { 
   createComponent, 
   render: component => component.tagName, 
   update, 
-  Hook: { State, Effect, Lifecycle }
+  Hook
 };
-const Vis = { createApp, Component };
+const Vis = { 
+    createApp, 
+    Component 
+};
 export {Vis};
