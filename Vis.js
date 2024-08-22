@@ -385,6 +385,21 @@ function createComponent(config) {
   }
   customElements.define(name, Component);
 }
+const globalRegistry = new Map();
+
+export function registerPackage(name, pkg) {
+  globalRegistry.set(name, pkg);
+}
+
+export function getPackage(name) {
+  return globalRegistry.get(name);
+}
+function use(name, pkg){
+    if (pkg) {
+            registerPackage(name, pkg);
+        }
+        return getPackage(name);
+}
 const Lifecycle = { 
     manageCreated, 
     manageMounted, 
@@ -413,6 +428,7 @@ const Component = {
 };
 const Vis = { 
     createApp, 
-    Component 
+    Component,
+    use
 };
 export {Vis};
