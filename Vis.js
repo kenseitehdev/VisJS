@@ -29,8 +29,18 @@ function createApp(location, components) {
   bindStateAndEvents(appRoot);
   return appRoot;
 }
-function update (){
-  console.log("update");
+const globalRegistry = new Map();
+export function registerPackage(name, pkg) {
+  globalRegistry.set(name, pkg);
+}
+export function getPackage(name) {
+  return globalRegistry.get(name);
+}
+function use(name, pkg) {
+  if (pkg) {
+    registerPackage(name, pkg);
+  }
+  return getPackage(name);
 }
 function manageState(key, initialValue) {
   let storedValue = localStorage.getItem(key);
@@ -41,7 +51,7 @@ function manageState(key, initialValue) {
   };
   const setState = (newState) => {
     state = newState;
-    localStorage.setItem(key, JSON.stringify(state));  // Persist state
+    localStorage.setItem(key, JSON.stringify(state)); // Persist state
     notifySubscribers();
   };
   const getState = () => state;
@@ -53,7 +63,7 @@ function manageState(key, initialValue) {
   };
   const stateUpdated = (newState) => {
     state = newState;
-    localStorage.setItem(key, JSON.stringify(state));  // Persist state
+    localStorage.setItem(key, JSON.stringify(state)); // Persist state
     notifySubscribers();
   };
   return { setState, getState, subscribe, stateUpdated };
@@ -61,7 +71,7 @@ function manageState(key, initialValue) {
 function manageEffect(effectCallback, dependencies = []) {
   let previousDependencies = dependencies.map(dep => dep.get());
   let cleanup = null;
-  const runEffect = () => {
+  const execute = () => {
     if (cleanup) cleanup();
     cleanup = effectCallback();
   };
@@ -73,14 +83,14 @@ function manageEffect(effectCallback, dependencies = []) {
   const checkAndRunEffect = () => {
     if (hasDependenciesChanged()) {
       previousDependencies = getDependenciesState();
-      runEffect();
+      execute();
     }
   };
-  runEffect();
+  execute();
   dependencies.forEach(dep => dep.execute(checkAndRunEffect));
   return () => {
     if (cleanup) cleanup();
-    dependencies.forEach(dep => dep.set(null)); // Assuming set(null) unsubscribes the effect
+    dependencies.forEach(dep => dep.set(null));
   };
 }
 function manageRef(initialValue) {
@@ -114,7 +124,7 @@ function manageCallback(callback, dependencies = []) {
   let previousDependencies = dependencies.map(dep => dep.get());
   const hasDependenciesChanged = () => {
     const currentDependencies = dependencies.map(dep => dep.get());
-    return currentDependencies.length !== previousDependencies.length || 
+    return currentDependencies.length !== previousDependencies.length ||
       currentDependencies.some((val, index) => val !== previousDependencies[index]);
   };
   if (hasDependenciesChanged()) {
@@ -123,16 +133,6 @@ function manageCallback(callback, dependencies = []) {
   }
   return () => {};
 }
-function manageLifecycle(component, lifecycleType, callback) {
-  component.lifecycle[lifecycleType].push(callback);
-  if (component[`is${lifecycleType.charAt(0).toUpperCase() + lifecycleType.slice(1)}`]) {
-    callback.call(component);
-  }
-}
-const manageCreated = (component, callback) => manageLifecycle(component, 'created', callback);
-const manageMounted = (component, callback) => manageLifecycle(component, 'mounted', callback);
-const manageUpdated = (component, callback) => manageLifecycle(component, 'updated', callback);
-const manageDestroyed = (component, callback) => manageLifecycle(component, 'destroyed', callback);
 function bindStateAndEvents(root) {
   const content = root.shadowRoot || root;
   const ifElements = content.querySelectorAll('[v-if], [v-else]');
@@ -184,8 +184,7 @@ function bindStateAndEvents(root) {
               itemElement.setAttribute('data-index', index);
               itemElement.innerHTML = itemElement.innerHTML
                 .replace(new RegExp(`{{\\s*${item}\\s*}}`, 'g'), itemValue)
-                .replace(new RegExp(`{{\\s*${item}
-.index\\s*}}`, 'g'), index);
+                .replace(new RegExp(`{{\\s*${item}.index\\s*}}`, 'g'), index);
               container.appendChild(itemElement);
             });
           } else {
@@ -243,14 +242,36 @@ class CustomComponent extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.isCreated = false;
-    this.isMounted = false;
-    this.isUpdated = false;
-    this.isDestroyed = false;
+    this.lifecycle = {
+      mount: this.mount.bind(this),
+      update: this.update.bind(this),
+      destroy: this.destroy.bind(this),
+      isMounted: false,
+      isUpdated: false,
+      isDestroyed: false
+    };
+    this.effects = [];
+    this.eventListeners = [];
   }
   connectedCallback() {
     this.render();
     this.bindEvents();
+    this.lifecycle.mount();
+  }
+  disconnectedCallback() {
+    this.lifecycle.destroy();
+    this.cleanupEffects();
+    this.removeEventListeners();
+  }
+  cleanupEffects() {
+    this.effects.forEach(cleanup => cleanup());
+    this.effects = [];
+  }
+  removeEventListeners() {
+    this.eventListeners.forEach(({ event, handler }) => {
+      this.removeEventListener(event, handler);
+    });
+    this.eventListeners = [];
   }
   render() {
     const shadowRoot = this.shadowRoot;
@@ -300,11 +321,11 @@ class CustomComponent extends HTMLElement {
     try {
       return new Function('return ' + condition).call(this.state);
     } catch (e) {
-    this.showError('Error evaluating condition: ' + condition);
+      this.showError('Error evaluating condition: ' + condition);
       return false;
     }
   }
-    showError(message) {
+  showError(message) {
     const shadowRoot = this.shadowRoot;
     const errorElement = shadowRoot.querySelector('.error-modal');
     if (errorElement) {
@@ -325,10 +346,50 @@ class CustomComponent extends HTMLElement {
     }
   }
   bindEvents() {
+    // This method can be used to attach event listeners
   }
 }
+class Context {
+  constructor(initialState) {
+    this.state = initialState;
+    this.subscribers = new Set();
+  }
+  setState(newState) {
+    this.state = newState;
+    this.notifySubscribers();
+  }
+  getState() {
+    return this.state;
+  }
+  subscribe(callback) {
+    this.subscribers.add(callback);
+    return () => this.subscribers.delete(callback);
+  }
+  notifySubscribers() {
+    this.subscribers.forEach(callback => callback(this.state));
+  }
+}
+function manageContext({ context, children }) {
+  const contextElement = document.createElement('div');
+  contextElement.style.display = 'none'; // Hidden context provider
+  contextElement.addEventListener('context-update', () => {
+    const state = context.getState();
+    children.forEach(child => {
+      if (typeof child.update === 'function') {
+        child.update(state);
+      }
+    });
+  });
+  document.body.appendChild(contextElement);
+  context.subscribe(() => {
+    const event = new Event('context-update');
+    contextElement.dispatchEvent(event);
+  });
+
+  return contextElement;
+}
 function createComponent(config) {
-  const { name, data, template, methods,dependencies = {}, styles = "" } = config;
+  const { name, data, template, methods, dependencies = {}, styles = "" } = config;
   class Component extends HTMLElement {
     constructor() {
       super();
@@ -343,7 +404,7 @@ function createComponent(config) {
     }
     render() {
       const templateString = this.interpolateTemplate(template);
-      this.shadowRoot.innerHTML= `
+      this.shadowRoot.innerHTML = `
         <style>${styles}</style>
         ${templateString}
       `;
@@ -403,47 +464,27 @@ function createComponent(config) {
   }
   customElements.define(name, Component);
 }
-const globalRegistry = new Map();
-export function registerPackage(name, pkg) {
-  globalRegistry.set(name, pkg);
-}
-export function getPackage(name) {
-  return globalRegistry.get(name);
-}
-function use(name, pkg){
-    if (pkg) {
-            registerPackage(name, pkg);
-        }
-        return getPackage(name);
-}
-const Lifecycle = { 
-    manageCreated, 
-    manageMounted, 
-    manageUpdated, 
-    manageDestroyed 
-};
 const Effect = { 
-    manageEffect, 
-    manageMemo, 
-    manageCallback 
+  manageEffect, 
+  manageMemo, 
+  manageCallback 
 };
 const State = { 
-    manageState, 
-    manageRef 
+  manageState, 
+  manageRef,
+  manageContext
 };
-const Hook={
-    State, 
-    Effect, 
-    Lifecycle 
-}
+const Hook = { 
+  State, 
+  Effect 
+};
 const Component = { 
   createComponent, 
-  update, 
-  Hook
+  Hook 
 };
 const Vis = { 
-    createApp, 
-    Component,
-    use
+  createApp, 
+  Component,
+  use 
 };
-export {Vis};
+export { Vis };
