@@ -32,14 +32,16 @@ function createApp(location, components) {
 function update (){
   console.log("update");
 }
-function manageState(initialValue) {
-  let state = initialValue;
+function manageState(key, initialValue) {
+  let storedValue = localStorage.getItem(key);
+  let state = storedValue !== null ? JSON.parse(storedValue) : initialValue;
   let subscribers = [];
   const notifySubscribers = () => {
     subscribers.forEach(cb => cb(state));
   };
   const setState = (newState) => {
     state = newState;
+    localStorage.setItem(key, JSON.stringify(state));  // Persist state
     notifySubscribers();
   };
   const getState = () => state;
@@ -48,21 +50,22 @@ function manageState(initialValue) {
     return () => {
       subscribers = subscribers.filter(sub => sub !== cb);
     };
+  };
   const stateUpdated = (newState) => {
     state = newState;
+    localStorage.setItem(key, JSON.stringify(state));  // Persist state
     notifySubscribers();
   };
-  return { setState, getState, subscribe, unsubscribe: unsubscribe, stateUpdated };
-}
+  return { setState, getState, subscribe, stateUpdated };
 }
 function manageEffect(effectCallback, dependencies = []) {
-  let previousDependencies = dependencies.map(dep => dep.getState());
+  let previousDependencies = dependencies.map(dep => dep.get());
   let cleanup = null;
   const runEffect = () => {
     if (cleanup) cleanup();
     cleanup = effectCallback();
   };
-  const getDependenciesState = () => dependencies.map(dep => dep.getState());
+  const getDependenciesState = () => dependencies.map(dep => dep.get());
   const hasDependenciesChanged = () => {
     const currentDependencies = getDependenciesState();
     return !currentDependencies.every((val, index) => val === previousDependencies[index]);
@@ -74,10 +77,10 @@ function manageEffect(effectCallback, dependencies = []) {
     }
   };
   runEffect();
-  dependencies.forEach(dep => dep.subscribe(checkAndRunEffect));
+  dependencies.forEach(dep => dep.execute(checkAndRunEffect));
   return () => {
     if (cleanup) cleanup();
-    dependencies.forEach(dep => dep.unsubscribe(checkAndRunEffect));
+    dependencies.forEach(dep => dep.set(null)); // Assuming set(null) unsubscribes the effect
   };
 }
 function manageRef(initialValue) {
@@ -89,13 +92,15 @@ function manageRef(initialValue) {
 }
 function manageMemo(memoCallback, dependencies = []) {
   let memoValue = null;
-  let previousDependencies = [];
-  const hasDependenciesChanged = () => 
-    dependencies.length !== previousDependencies.length ||
-    dependencies.some((dep, index) => dep !== previousDependencies[index]);
-  const set = () => {
+  let previousDependencies = dependencies.map(dep => dep.get());
+  const hasDependenciesChanged = () => {
+    const currentDependencies = dependencies.map(dep => dep.get());
+    return currentDependencies.length !== previousDependencies.length ||
+      currentDependencies.some((val, index) => val !== previousDependencies[index]);
+  };
+  const updateMemo = () => {
     if (hasDependenciesChanged()) {
-      previousDependencies = [...dependencies];
+      previousDependencies = dependencies.map(dep => dep.get());
       memoValue = memoCallback();
     }
   };
@@ -106,14 +111,17 @@ function manageMemo(memoCallback, dependencies = []) {
   };
 }
 function manageCallback(callback, dependencies = []) {
-  let previousDependencies = [];
-  const hasDependenciesChanged = dependencies.length !== previousDependencies.length || 
-    dependencies.some((dep, index) => dep !== previousDependencies[index]);
-  if (hasDependenciesChanged) {
-    previousDependencies = [...dependencies];
+  let previousDependencies = dependencies.map(dep => dep.get());
+  const hasDependenciesChanged = () => {
+    const currentDependencies = dependencies.map(dep => dep.get());
+    return currentDependencies.length !== previousDependencies.length || 
+      currentDependencies.some((val, index) => val !== previousDependencies[index]);
+  };
+  if (hasDependenciesChanged()) {
+    previousDependencies = dependencies.map(dep => dep.get());
     return callback;
   }
-  return () => {}; 
+  return () => {};
 }
 function manageLifecycle(component, lifecycleType, callback) {
   component.lifecycle[lifecycleType].push(callback);

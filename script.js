@@ -34,26 +34,22 @@ Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
 todoList: [
-    "1. handle the encapsulation of Hooks with themselves and include Hook with Component and add state persistence",
-    "2. handle Dependency management within Component",
-    "3. Further incapsulate and enhance lifecycle and include it in Component and add has updated isCreated, isMounted etc",
+    "1. Further incapsulate and enhance lifecycle and include it in Component and add has updated isCreated, isMounted etc",
     "&nbsp;&nbsp;&nbsp;&nbsp;a.Simplification of API – Create a straightforward API to make further integration easier.",    
       "&nbsp;&nbsp;&nbsp;&nbsp;b.Integrate Lifecycle into component",
       "&nbsp;&nbsp;&nbsp;&nbsp;c.Integrate dependencies into component",
-    "4. Implement integrated Complex Nested Loops – Handle complex nested loops in rendering or data processing.",
-    "5. Security",
+    "2. Implement integrated Complex Nested Loops – Handle complex nested loops in rendering or data processing.",
+    "3. Security",
     " &nbsp;&nbsp;&nbsp;&nbsp;a. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
    "&nbsp;&nbsp;&nbsp;&nbsp;c. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
-    "6. Add VDOM to shadow DOM",
-    "7. New Features",
+    "4. Add VDOM to shadow DOM",
+    "5. New Features",
     "&nbsp;&nbsp;&nbsp;&nbsp;a. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.",
     "&nbsp;&nbsp;&nbsp;&nbsp;c. Testing and debugging",
     "&nbsp;&nbsp;&nbsp;&nbsp;d. Custom Directive Support",
     "&nbsp;&nbsp;&nbsp;&nbsp;e. Context Hooks",
-
-
 ],
     showAlert: true
   }),
