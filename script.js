@@ -34,13 +34,14 @@ Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
 todoList: [
-    "1. Security",
+    "1. Add VDOM to shadow DOM",
+    "2. Nested Loops and advanced directive functionality",
+    "3. Security",
+    "4. Make more efficient - Goal 200LOC, 2kb minified",
     " &nbsp;&nbsp;&nbsp;&nbsp;a. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
    "&nbsp;&nbsp;&nbsp;&nbsp;c. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
-    "2. Add VDOM to shadow DOM",
-    "3. Nested Loops and advanced directive functionality",
-    "3. New Features",
+    "5. New Features",
     "&nbsp;&nbsp;&nbsp;&nbsp;a. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.",
     "&nbsp;&nbsp;&nbsp;&nbsp;c. Testing and debugging",
