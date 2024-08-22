@@ -1,4 +1,32 @@
-function defineCustomElement(tagName, template) {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Vis.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Vis.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>function defineCustomElement(tagName, template) {
   class CustomElement extends HTMLElement {
     constructor() {
       super();
@@ -16,6 +44,12 @@ function defineCustomElement(tagName, template) {
 function createCustomElement(tagName) {
   return document.createElement(tagName);
 }
+/**
+ * Initializes the application by appending specified components to a root element.
+ * @param {string} location - The ID of the root element where components will be appended.
+ * @param {Array&lt;{ name: string }>} components - The components to be added to the root element.
+ * @returns {HTMLElement | undefined} - The root element if successful, otherwise undefined.
+ */
 function createApp(location, components) {
   const appRoot = document.getElementById(location);
   if (!appRoot) {
@@ -29,32 +63,36 @@ function createApp(location, components) {
   bindStateAndEvents(appRoot);
   return appRoot;
 }
+/**
+ * Logs a message to the console for updating purposes.
+ */
 function update (){
   console.log("update");
 }
+/**
+ * Manages state and subscriptions for state changes.
+ * @param {*} initialValue - The initial state value.
+ * @returns {Object} - An object with `setState`, `getState`, and `subscribe` methods.
+ */
 function manageState(initialValue) {
   let state = initialValue;
   let subscribers = [];
-  const notifySubscribers = () => {
-    subscribers.forEach(cb => cb(state));
-  };
   const setState = (newState) => {
     state = newState;
-    notifySubscribers();
+    subscribers.forEach(cb => cb());
   };
   const getState = () => state;
   const subscribe = (cb) => {
     subscribers.push(cb);
-    return () => {
-      subscribers = subscribers.filter(sub => sub !== cb);
-    };
-  const stateUpdated = (newState) => {
-    state = newState;
-    notifySubscribers();
   };
-  return { setState, getState, subscribe, unsubscribe: unsubscribe, stateUpdated };
+  return { setState, getState, subscribe };
 }
-}
+/**
+ * Manages side effects based on changes in dependencies.
+ * @param {Function} effectCallback - The callback function to run when dependencies change. It should return a cleanup function.
+ * @param {Array} [dependencies=[]] - An array of state objects whose changes will trigger the effectCallback.
+ * @returns {Function} - A function to clean up the effect when it's no longer needed.
+ */
 function manageEffect(effectCallback, dependencies = []) {
   let previousDependencies = dependencies.map(dep => dep.getState());
   let cleanup = null;
@@ -80,6 +118,11 @@ function manageEffect(effectCallback, dependencies = []) {
     dependencies.forEach(dep => dep.unsubscribe(checkAndRunEffect));
   };
 }
+/**
+ * Creates a ref object that holds a value and allows getting and setting it.
+ * @param {*} initialValue - The initial value of the ref.
+ * @returns {Object} - An object with `get` and `set` methods for accessing and updating the ref value.
+ */
 function manageRef(initialValue) {
   let refValue = initialValue;
   return {
@@ -87,13 +130,19 @@ function manageRef(initialValue) {
     set: value => { refValue = value; },
   };
 }
+/**
+ * Manages memoized values based on dependencies.
+ * @param {Function} memoCallback - The callback function to compute the memoized value.
+ * @param {Array} [dependencies=[]] - An array of values that the memoization depends on. If any of these values change, the memoCallback will be recalculated.
+ * @returns {Function} - A function that, when called, returns the current memoized value.
+ */
 function manageMemo(memoCallback, dependencies = []) {
   let memoValue = null;
   let previousDependencies = [];
   const hasDependenciesChanged = () => 
     dependencies.length !== previousDependencies.length ||
     dependencies.some((dep, index) => dep !== previousDependencies[index]);
-  const set = () => {
+  const updateMemo = () => {
     if (hasDependenciesChanged()) {
       previousDependencies = [...dependencies];
       memoValue = memoCallback();
@@ -105,6 +154,12 @@ function manageMemo(memoCallback, dependencies = []) {
     return memoValue;
   };
 }
+/**
+ * Manages a callback function that is updated when dependencies change.
+ * @param {Function} callback - The callback function to be executed when dependencies change.
+ * @param {Array} [dependencies=[]] - An array of values that the callback depends on. If any of these values change, the callback will be updated.
+ * @returns {Function} - The updated callback function, or a no-op function if dependencies haven't changed.
+ */
 function manageCallback(callback, dependencies = []) {
   let previousDependencies = [];
   const hasDependenciesChanged = dependencies.length !== previousDependencies.length || 
@@ -115,16 +170,47 @@ function manageCallback(callback, dependencies = []) {
   }
   return () => {}; 
 }
+/**
+ * Registers a lifecycle callback for a specific lifecycle event on a component.
+ * @param {Object} component - The component object to register the lifecycle callback with.
+ * @param {string} lifecycleType - The type of lifecycle event (e.g., 'created', 'mounted', 'updated', 'destroyed').
+ * @param {Function} callback - The callback function to execute during the specified lifecycle event.
+ */
 function manageLifecycle(component, lifecycleType, callback) {
   component.lifecycle[lifecycleType].push(callback);
   if (component[`is${lifecycleType.charAt(0).toUpperCase() + lifecycleType.slice(1)}`]) {
     callback.call(component);
   }
 }
+/**
+ * Registers a 'created' lifecycle callback for a component.
+ * @param {Object} component - The component object to register the 'created' callback with.
+ * @param {Function} callback - The callback function to execute when the component is created.
+ */
 const manageCreated = (component, callback) => manageLifecycle(component, 'created', callback);
+/**
+ * Registers a 'mounted' lifecycle callback for a component.
+ * @param {Object} component - The component object to register the 'mounted' callback with.
+ * @param {Function} callback - The callback function to execute when the component is mounted.
+ */
+
 const manageMounted = (component, callback) => manageLifecycle(component, 'mounted', callback);
+/**
+ * Registers an 'updated' lifecycle callback for a component.
+ * @param {Object} component - The component object to register the 'updated' callback with.
+ * @param {Function} callback - The callback function to execute when the component is updated.
+ */
 const manageUpdated = (component, callback) => manageLifecycle(component, 'updated', callback);
+/**
+ * Registers a 'destroyed' lifecycle callback for a component.
+ * @param {Object} component - The component object to register the 'destroyed' callback with.
+ * @param {Function} callback - The callback function to execute when the component is destroyed.
+ */
 const manageDestroyed = (component, callback) => manageLifecycle(component, 'destroyed', callback);
+/**
+ * Binds state and event handlers to DOM elements based on custom attributes.
+ * @param {HTMLElement} root - The root element to bind state and events within.
+ */
 function bindStateAndEvents(root) {
   const content = root.shadowRoot || root;
   const ifElements = content.querySelectorAll('[v-if], [v-else]');
@@ -132,7 +218,7 @@ function bindStateAndEvents(root) {
   ifElements.forEach(el => {
     if (el.hasAttribute('v-if')) {
       const ifAttr = el.getAttribute('v-if');
-      if (ifAttr && window[ifAttr]) {
+      if (ifAttr &amp;&amp; window[ifAttr]) {
         const binding = window[ifAttr];
         const updateVisibility = () => {
           if (binding.getState()) {
@@ -192,7 +278,7 @@ function bindStateAndEvents(root) {
   const bindableElements = content.querySelectorAll('[v-bind\\:data], [v-bind\\:class], [v-bind\\:style], [v-on\\:hover], [v-on\\:click]');
   bindableElements.forEach(el => {
     const bindDataAttr = el.getAttribute('v-bind:data');
-    if (bindDataAttr && window[bindDataAttr]) {
+    if (bindDataAttr &amp;&amp; window[bindDataAttr]) {
       const bindingData = window[bindDataAttr];
       el.textContent = bindingData.getState();
       bindingData.subscribe(() => {
@@ -200,7 +286,7 @@ function bindStateAndEvents(root) {
       });
     }
     const bindClassAttr = el.getAttribute('v-bind:class');
-    if (bindClassAttr && window[bindClassAttr]) {
+    if (bindClassAttr &amp;&amp; window[bindClassAttr]) {
       const bindingClass = window[bindClassAttr];
       el.className = bindingClass.getState();
       bindingClass.subscribe(() => {
@@ -208,7 +294,7 @@ function bindStateAndEvents(root) {
       });
     }
     const bindStyleAttr = el.getAttribute('v-bind:style');
-    if (bindStyleAttr && window[bindStyleAttr]) {
+    if (bindStyleAttr &amp;&amp; window[bindStyleAttr]) {
       const bindingStyle = window[bindStyleAttr];
       el.style.cssText = bindingStyle.getState();
       bindingStyle.subscribe(() => {
@@ -216,14 +302,14 @@ function bindStateAndEvents(root) {
       });
     }
     const clickAttr = el.getAttribute('v-on:click');
-    if (clickAttr && window[clickAttr]) {
+    if (clickAttr &amp;&amp; window[clickAttr]) {
       const binding = window[clickAttr];
       el.addEventListener('click', () => {
         binding.setState(binding.getState() + 1);
       });
     }
     const hoverAttr = el.getAttribute('v-on:hover');
-    if (hoverAttr && window[hoverAttr]) {
+    if (hoverAttr &amp;&amp; window[hoverAttr]) {
       const binding = window[hoverAttr];
       el.addEventListener('mouseover', () => {
         binding.setState(binding.getState() + 1);
@@ -231,6 +317,12 @@ function bindStateAndEvents(root) {
     }
   });
 }
+/**
+ * CustomComponent class extends HTMLElement to create a custom element with a shadow DOM.
+ * This component includes lifecycle methods, rendering logic, and error handling.
+ * 
+ * @extends HTMLElement
+ */
 class CustomComponent extends HTMLElement {
   constructor() {
     super();
@@ -247,9 +339,9 @@ class CustomComponent extends HTMLElement {
   render() {
     const shadowRoot = this.shadowRoot;
     shadowRoot.innerHTML = `
-      <style>
+      &lt;style>
         ${this.styles}
-      </style>
+      &lt;/style>
       ${this.template}
     `;
     shadowRoot.querySelectorAll('[v-for]').forEach(el => {
@@ -268,7 +360,7 @@ class CustomComponent extends HTMLElement {
     });
     shadowRoot.querySelectorAll('[v-else]').forEach(el => {
       const prevEl = el.previousElementSibling;
-      if (prevEl && prevEl.hasAttribute('v-if')) {
+      if (prevEl &amp;&amp; prevEl.hasAttribute('v-if')) {
         const condition = prevEl.getAttribute('v-if');
         el.style.display = !this.evaluateCondition(condition) ? 'block' : 'none';
       }
@@ -296,6 +388,11 @@ class CustomComponent extends HTMLElement {
       return false;
     }
   }
+      /**
+   * Displays an error message in a modal element within the shadow DOM.
+   * 
+   * @param {string} message - The error message to display.
+   */
     showError(message) {
     const shadowRoot = this.shadowRoot;
     const errorElement = shadowRoot.querySelector('.error-modal');
@@ -319,6 +416,17 @@ class CustomComponent extends HTMLElement {
   bindEvents() {
   }
 }
+/**
+ * Factory function to create a custom element based on the provided configuration.
+ * 
+ * @param {Object} config - Configuration object for the component.
+ * @param {string} config.name - The name of the custom element.
+ * @param {Function|Object} config.data - Function returning initial state or state object.
+ * @param {string} config.template - The HTML template string for the component.
+ * @param {Object} config.methods - Object containing methods to be bound to the component.
+ * @param {Object} [config.dependencies={}] - Optional dependencies for the component.
+ * @param {string} [config.styles=""] - Optional CSS styles for the component.
+ */
 function createComponent(config) {
   const { name, data, template, methods,dependencies = {}, styles = "" } = config;
   class Component extends HTMLElement {
@@ -336,7 +444,7 @@ function createComponent(config) {
     render() {
       const templateString = this.interpolateTemplate(template);
       this.shadowRoot.innerHTML= `
-        <style>${styles}</style>
+        &lt;style>${styles}&lt;/style>
         ${templateString}
       `;
       this.attachEventListeners();
@@ -350,7 +458,7 @@ function createComponent(config) {
       return interpolated;
     }
     processVIfElse(template) {
-      return template.replace(/<template v-if="(.*?)">(.*?)<\/template>\s*(<template v-else>(.*?)<\/template>)?/gs, (match, condition, ifContent, _, elseContent) => {
+      return template.replace(/&lt;template v-if="(.*?)">(.*?)&lt;\/template>\s*(&lt;template v-else>(.*?)&lt;\/template>)?/gs, (match, condition, ifContent, _, elseContent) => {
         const conditionValue = this.evaluateCondition(condition);
         return conditionValue ? ifContent : (elseContent || '');
       });
@@ -387,7 +495,7 @@ function createComponent(config) {
     attachEventListeners() {
       this.shadowRoot.querySelectorAll('[v-on\\:click]').forEach(el => {
         const event = el.getAttribute('v-on:click');
-        if (this[event] && typeof this[event] === 'function') {
+        if (this[event] &amp;&amp; typeof this[event] === 'function') {
           el.addEventListener('click', this[event]);
         }
       });
@@ -396,12 +504,21 @@ function createComponent(config) {
   customElements.define(name, Component);
 }
 const globalRegistry = new Map();
+
 export function registerPackage(name, pkg) {
   globalRegistry.set(name, pkg);
 }
+
 export function getPackage(name) {
   return globalRegistry.get(name);
 }
+/**
+ * Registers or retrieves a package from the global registry.
+ * 
+ * @param {string} name - The name of the package.
+ * @param {Object} [pkg] - The package object to register. If not provided, retrieves the package.
+ * @returns {Object} - The package object.
+ */
 function use(name, pkg){
     if (pkg) {
             registerPackage(name, pkg);
@@ -430,6 +547,7 @@ const Hook={
 }
 const Component = { 
   createComponent, 
+  render: component => component.tagName, 
   update, 
   Hook
 };
@@ -439,3 +557,26 @@ const Vis = {
     use
 };
 export {Vis};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CustomComponent.html">CustomComponent</a></li></ul><h3>Global</h3><ul><li><a href="global.html#bindStateAndEvents">bindStateAndEvents</a></li><li><a href="global.html#createApp">createApp</a></li><li><a href="global.html#createComponent">createComponent</a></li><li><a href="global.html#manageCallback">manageCallback</a></li><li><a href="global.html#manageCreated">manageCreated</a></li><li><a href="global.html#manageDestroyed">manageDestroyed</a></li><li><a href="global.html#manageEffect">manageEffect</a></li><li><a href="global.html#manageLifecycle">manageLifecycle</a></li><li><a href="global.html#manageMemo">manageMemo</a></li><li><a href="global.html#manageMounted">manageMounted</a></li><li><a href="global.html#manageRef">manageRef</a></li><li><a href="global.html#manageState">manageState</a></li><li><a href="global.html#manageUpdated">manageUpdated</a></li><li><a href="global.html#update">update</a></li><li><a href="global.html#use">use</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Thu Aug 22 2024 01:11:51 GMT-0500 (Central Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
