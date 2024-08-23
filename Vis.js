@@ -16,16 +16,69 @@ function defineCustomElement(tagName, template) {
 function createCustomElement(tagName) {
   return document.createElement(tagName);
 }
+function showError(message) {
+const errModal = createComponent({
+  name: 'err-modal',
+  data: () => ({
+    isVisible: false,
+      message:message
+  }),
+  template: `
+<div class="error-modal" v-if="isVisible">
+      <div class="modal-content">
+        <p>{{ message }}</p>
+      </div>
+    </div>
+  `,
+  styles: `
+    .error-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      height: 80%;
+      width: 80%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background-color: rgba(255, 0, 0, 0.4);
+      color: white;
+      border-radius: 5px;
+      z-index: 1000;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      transition: opacity 0.3s ease;
+      max-width: 80%;
+      text-align: center;
+    }
+    }
+  `,
+  methods: {
+    showError(message) {
+      this.state.message = message;
+      this.state.isVisible = true; // Ensure the modal is visible
+      setTimeout(() => {
+        this.state.isVisible = false;
+      }, 5000);
+    }
+  }
+});
+}
 function createApp(location, components) {
   const appRoot = document.getElementById(location);
   if (!appRoot) {
+    showError("Element with ID " + location + " not found.");
     console.error(`Element with ID ${location} not found.`);
+    let errorModal = document.querySelector('err-modal');
+    if (!errorModal) {
+      errorModal = document.createElement('err-modal');
+      document.body.appendChild(errorModal);
+      bindStateAndEvents(errorModal);
+    }
     return;
   }
   components.forEach(({ name }) => {
-    const componentElement = createCustomElement(name);
+    const componentElement = document.createElement(name);
     appRoot.appendChild(componentElement);
   });
+
   bindStateAndEvents(appRoot);
   return appRoot;
 }
@@ -37,10 +90,8 @@ export function getPackage(name) {
   return globalRegistry.get(name);
 }
 function use(name, pkg) {
-  if (pkg) {
-    registerPackage(name, pkg);
-  }
-  return getPackage(name);
+  pkg ? registerPackage(name, pkg):'';
+    return getPackage(name);
 }
 function manageState(key, initialValue) {
   let storedValue = localStorage.getItem(key);
@@ -71,25 +122,22 @@ function manageState(key, initialValue) {
 function manageEffect(effectCallback, dependencies = []) {
   let previousDependencies = dependencies.map(dep => dep.get());
   let cleanup = null;
-  const execute = () => {
-    if (cleanup) cleanup();
-    cleanup = effectCallback();
-  };
+const execute = () => {
+  cleanup && cleanup();
+  cleanup = effectCallback();
+};
   const getDependenciesState = () => dependencies.map(dep => dep.get());
   const hasDependenciesChanged = () => {
     const currentDependencies = getDependenciesState();
     return !currentDependencies.every((val, index) => val === previousDependencies[index]);
   };
-  const checkAndRunEffect = () => {
-    if (hasDependenciesChanged()) {
-      previousDependencies = getDependenciesState();
-      execute();
-    }
-  };
+const checkAndRunEffect = () => {
+  hasDependenciesChanged() ? (previousDependencies = getDependenciesState(), execute()) : null;
+};
   execute();
   dependencies.forEach(dep => dep.execute(checkAndRunEffect));
   return () => {
-    if (cleanup) cleanup();
+    cleanup ? cleanup():'';
     dependencies.forEach(dep => dep.set(null));
   };
 }
@@ -375,9 +423,7 @@ function manageContext({ context, children }) {
   contextElement.addEventListener('context-update', () => {
     const state = context.getState();
     children.forEach(child => {
-      if (typeof child.update === 'function') {
-        child.update(state);
-      }
+      typeof child.update === 'function'? child.update(state):''; 
     });
   });
   document.body.appendChild(contextElement);
@@ -385,7 +431,6 @@ function manageContext({ context, children }) {
     const event = new Event('context-update');
     contextElement.dispatchEvent(event);
   });
-
   return contextElement;
 }
 function createComponent(config) {
@@ -395,11 +440,9 @@ function createComponent(config) {
       super();
       this.attachShadow({ mode: 'open' });
       this.state = typeof data === 'function' ? data() : { ...data };
-      for (const key in methods) {
-        if (methods.hasOwnProperty(key)) {
-          this[key] = methods[key].bind(this);
-        }
-      }
+    for (const key in methods) {
+        if (typeof methods[key] === 'function') this[key] = methods[key].bind(this);
+}
       this.render();
     }
     render() {

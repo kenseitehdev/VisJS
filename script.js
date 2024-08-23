@@ -13,7 +13,9 @@ Vis.Component.createComponent({
   },
   template: `
     <button class="button" v-on:click="increment">Count: <span>{{ counterState }}</span></button>
-  `,
+  
+
+    `,
   styles: `.button {
       padding: 15px 30px;
       border: 2px solid royalblue;
@@ -69,7 +71,8 @@ todoList: [
 
     <div class="container">
       <div class="logo">
-        <svg width="500" height="500" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+       
+    <svg width="500" height="500" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <style>
             .background { fill: white; opacity: 0.2; }
             .icon { fill: royalblue; }
