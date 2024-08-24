@@ -43,12 +43,14 @@ const location= error.location ||"";
       template: `
         <div id="err" class="error-modal" v-if="isVisible">
           <div class="border">
+
             <button class="closeBtn" v-on:click="showError('', '')">x</button>
           </div>
           <div class="modal-content">
        <span class="errHeader"> {{ location }}</span><p >{{ message }}</p>
           </div>
         </div>
+
       `,
       styles: `
         .errMsg{
@@ -127,7 +129,6 @@ function createApp(location, components) {
     const componentElement = document.createElement(name);
     appRoot.appendChild(componentElement);
   });
-  bindStateAndEvents(appRoot);
   return appRoot;
 }
 const globalRegistry = new Map();
@@ -229,111 +230,6 @@ function manageCallback(callback, dependencies = []) {
   }
   return () => {};
 }
-function bindStateAndEvents(root) {
-  const content = root.shadowRoot || root;
-  const ifElements = content.querySelectorAll('[v-if], [v-else]');
-  let lastIfElement = null;
-  ifElements.forEach(el => {
-    if (el.hasAttribute('v-if')) {
-      const ifAttr = el.getAttribute('v-if');
-      if (ifAttr && window[ifAttr]) {
-        const binding = window[ifAttr];
-        const updateVisibility = () => {
-          if (binding.getState()) {
-            el.style.display = 'block';
-            if (lastIfElement) {
-              lastIfElement.style.display = 'none';
-            }
-          } else {
-            el.style.display = 'none';
-          }
-        };
-        updateVisibility();
-        binding.subscribe(updateVisibility);
-        lastIfElement = el;
-      }
-    } else if (el.hasAttribute('v-else')) {
-      if (!lastIfElement || lastIfElement.style.display === 'none') {
-        el.style.display = 'block';
-      } else {
-        el.style.display = 'none';
-      }
-    }
-  });
-  const forElements = content.querySelectorAll('[v-for]');
-  forElements.forEach(el => {
-    const forAttr = el.getAttribute('v-for');
-    if (forAttr) {
-      const [item, items] = forAttr.split(' in ').map(str => str.trim());
-      const bindingItems = window[items];
-      if (bindingItems) {
-        const updateForLoop = () => {
-          const itemsArray = bindingItems.getState();
-          if (!Array.isArray(itemsArray)) return;
-          const container = el;
-          if (container) {
-            const templateContent = el.cloneNode(true);
-            container.innerHTML = ''; 
-            itemsArray.forEach((itemValue, index) => {
-              const itemElement = templateContent.cloneNode(true);
-              itemElement.removeAttribute('v-for');
-              itemElement.setAttribute('data-index', index);
-              itemElement.innerHTML = itemElement.innerHTML
-                .replace(new RegExp(`{{\\s*${item}\\s*}}`, 'g'), itemValue)
-                .replace(new RegExp(`{{\\s*${item}.index\\s*}}`, 'g'), index);
-              container.appendChild(itemElement);
-            });
-          } else {
-            console.error('Container element is null.');
-          }
-        };
-        updateForLoop();
-        bindingItems.subscribe(updateForLoop);
-      }
-    }
-  });
-  const bindableElements = content.querySelectorAll('[v-bind\\:data], [v-bind\\:class], [v-bind\\:style], [v-on\\:hover], [v-on\\:click]');
-  bindableElements.forEach(el => {
-    const bindDataAttr = el.getAttribute('v-bind:data');
-    if (bindDataAttr && window[bindDataAttr]) {
-      const bindingData = window[bindDataAttr];
-      el.textContent = bindingData.getState();
-      bindingData.subscribe(() => {
-        el.textContent = bindingData.getState();
-      });
-    }
-    const bindClassAttr = el.getAttribute('v-bind:class');
-    if (bindClassAttr && window[bindClassAttr]) {
-      const bindingClass = window[bindClassAttr];
-      el.className = bindingClass.getState();
-      bindingClass.subscribe(() => {
-        el.className = bindingClass.getState();
-      });
-    }
-    const bindStyleAttr = el.getAttribute('v-bind:style');
-    if (bindStyleAttr && window[bindStyleAttr]) {
-      const bindingStyle = window[bindStyleAttr];
-      el.style.cssText = bindingStyle.getState();
-      bindingStyle.subscribe(() => {
-        el.style.cssText = bindingStyle.getState();
-      });
-    }
-    const clickAttr = el.getAttribute('v-on:click');
-    if (clickAttr && window[clickAttr]) {
-      const binding = window[clickAttr];
-      el.addEventListener('click', () => {
-        binding.setState(binding.getState() + 1);
-      });
-    }
-    const hoverAttr = el.getAttribute('v-on:hover');
-    if (hoverAttr && window[hoverAttr]) {
-      const binding = window[hoverAttr];
-      el.addEventListener('mouseover', () => {
-        binding.setState(binding.getState() + 1);
-      });
-    }
-  });
-}
 class CustomComponent extends HTMLElement {
   constructor() {
     super();
@@ -389,6 +285,7 @@ class CustomComponent extends HTMLElement {
     });
     shadowRoot.querySelectorAll('[v-if]').forEach(el => {
       const condition = el.getAttribute('v-if');
+        console.log(condition);
       el.style.display = this.evaluateCondition(condition) ? 'block' : 'none';
     });
     shadowRoot.querySelectorAll('[v-else]').forEach(el => {
@@ -509,41 +406,55 @@ function createComponent(config) {
       interpolated = this.processVFor(interpolated);
       return interpolated;
     }
-    processVIfElse(template) {
-      return template.replace(/<template v-if="(.*?)">(.*?)<\/template>\s*(<template v-else>(.*?)<\/template>)?/gs, (match, condition, ifContent, _, elseContent) => {
-        const conditionValue = this.evaluateCondition(condition);
-        return conditionValue ? ifContent : (elseContent || '');
-      });
-    }
-    evaluateCondition(condition) {
-      try {
-        return new Function('state', `with (state) { return ${condition}; }`)(this.state);
-      } catch {
-        return false;
-      }
-    }
-    processVFor(template) {
-      const container = document.createElement('div');
-      container.innerHTML = template;
-      const vForElements = container.querySelectorAll('[v-for]');
-      vForElements.forEach(el => {
-        const vForAttr = el.getAttribute('v-for');
-        if (vForAttr) {
-          const [item, listName] = vForAttr.split(' in ').map(str => str.trim());
-          const items = this.state[listName] || [];
-          const templateContent = el.innerHTML.trim();
-          el.innerHTML = '';
-          items.forEach(itemData => {
-            const itemScope = { ...itemData, [item]: itemData };
-            const itemHtml = templateContent.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
-              return itemScope[key] !== undefined ? itemScope[key] : '';
-            });
-            el.insertAdjacentHTML('beforeend', itemHtml);
-          });
+processVIfElse(template) {
+    return template.replace(
+        /<[^>]*v-if="([^"]*)">([\s\S]*?)<\/[^>]*>(?:<[^>]*v-else>([\s\S]*?)<\/[^>]*>)?/g,
+        (match, condition, ifContent, elseContent) => {
+            const conditionValue = this.evaluateCondition(condition);
+            return conditionValue ? ifContent : (elseContent || '');
         }
-      });
-      return container.innerHTML;
+    );
+}
+evaluateCondition(condition) {
+    try {
+        const cleanedCondition = condition.replace(/{{|}}/g, '').trim();
+        return new Function('state', `with (state) { return ${cleanedCondition}; }`)(this.state);
+    } catch {
+        return false;
     }
+}
+processVFor(template) {
+  const container = document.createElement('div');
+  container.innerHTML = template;
+  const vForElements = container.querySelectorAll('[v-for]');
+  
+  vForElements.forEach(el => {
+    const vForAttr = el.getAttribute('v-for');
+    if (vForAttr) {
+      // Expect v-for syntax like: item in items or (item, index) in items
+      const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
+      const [item, index] = itemPart.includes(',') 
+        ? itemPart.replace('(', '').replace(')', '').split(',').map(str => str.trim()) 
+        : [itemPart, null];
+      const items = this.state[listName] || [];
+      const templateContent = el.innerHTML.trim();
+      el.innerHTML = '';
+
+      items.forEach((itemData, idx) => {
+        const itemScope = { ...itemData, [item]: itemData };
+        if (index !== null) {
+          itemScope[index] = idx; // Assign the current index to the itemScope
+        }
+        const itemHtml = templateContent.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
+          return itemScope[key] !== undefined ? itemScope[key] : '';
+        });
+        el.insertAdjacentHTML('beforeend', itemHtml);
+      });
+    }
+  });
+
+  return container.innerHTML;
+}
     attachEventListeners() {
       this.shadowRoot.querySelectorAll('[v-on\\:click]').forEach(el => {
         const event = el.getAttribute('v-on:click');
