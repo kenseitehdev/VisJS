@@ -3,8 +3,7 @@ function defineCustomElement(tagName, template) {
     constructor() {
       super();
       const shadow = this.attachShadow({ mode: 'open' });
-      const templateElement = document.createElement('template');
-      templateElement.innerHTML = template;
+      const templateElement = document.createElement('template').innerHTML=template;
       shadow.appendChild(templateElement.content.cloneNode(true));
     }
     connectedCallback() {
@@ -16,56 +15,106 @@ function defineCustomElement(tagName, template) {
 function createCustomElement(tagName) {
   return document.createElement(tagName);
 }
-function showError(message) {
-const errModal = createComponent({
-  name: 'err-modal',
-  data: () => ({
-    isVisible: false,
-      message:message
-  }),
-  template: `
-<div class="error-modal" v-if="isVisible">
-      <div class="modal-content">
-        <p>{{ message }}</p>
-      </div>
-    </div>
-  `,
-  styles: `
-    .error-modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      height: 80%;
-      width: 80%;
-      transform: translate(-50%, -50%);
-      padding: 20px;
-      background-color: rgba(255, 0, 0, 0.4);
-      color: white;
-      border-radius: 5px;
-      z-index: 1000;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      transition: opacity 0.3s ease;
-      max-width: 80%;
-      text-align: center;
-    }
-    }
-  `,
-  methods: {
-    showError(message) {
-      this.state.message = message;
-      this.state.isVisible = true; // Ensure the modal is visible
-      setTimeout(() => {
-        this.state.isVisible = false;
-      }, 5000);
-    }
+function showError(error) {
+  const message = error.message || "An unknown error occurred";
+const location= error.location ||"";
+  const errorInfo = `<span class="errMsg">${message}</span>`;
+  let errorModal = document.querySelector('err-modal');
+  if (!errorModal) {
+    errorModal = createComponent({
+      name: 'err-modal',
+      data: () => ({
+        isVisible: true,
+        message: errorInfo,
+          location: `Error at ${error.location}`
+      }),
+      methods: {
+        showError(message, stack) {
+          this.state.message = message;
+          this.state.stack = stack;
+          this.state.isVisible = true;
+          this.render();
+          setTimeout(() => {
+            this.state.isVisible = false;
+            this.render();
+          }, 10000); 
+        }
+      },
+      template: `
+        <div id="err" class="error-modal" v-if="isVisible">
+          <div class="border">
+            <button class="closeBtn" v-on:click="showError('', '')">x</button>
+          </div>
+          <div class="modal-content">
+       <span class="errHeader"> {{ location }}</span><p >{{ message }}</p>
+          </div>
+        </div>
+      `,
+      styles: `
+        .errMsg{
+            font-size:20px;
+        }
+        .errHeader {
+          color: red;
+          font-size: 34px;
+        }
+        .closeBtn {
+          position: absolute;
+          right: 10px;
+          top: 5px;
+          background-color: transparent;
+          border: none;
+          font-size: 1.5rem;
+          color: white;
+          cursor: pointer;
+        }
+        .border {
+          background-color: red;
+          height: 2.6rem;
+          width: 100%;
+          position: absolute;
+          top: 0;
+          left: 0;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 10px;
+          box-sizing: border-box;
+          z-index: 10;
+        }
+        .error-modal {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 50%;
+          max-width: 90%;
+          background-color: rgba(9, 0, 5, 0.8);
+          color: white;
+          border-radius: 15px;
+          z-index: 1000;
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+          transition: opacity 0.3s ease, transform 0.3s ease;
+          overflow: hidden;
+          box-sizing: border-box;
+          opacity: 1;
+          padding: 2.6rem 20px 20px;
+        }
+        .modal-content {
+          background-color: #1a1a1a;
+          border-radius: 0 0 15px 15px;
+          padding: 20px;
+          box-sizing: border-box;
+          white-space: pre-wrap;
+        }
+      `
+    });
   }
-});
 }
 function createApp(location, components) {
   const appRoot = document.getElementById(location);
   if (!appRoot) {
-    showError("Element with ID " + location + " not found.");
-    console.error(`Element with ID ${location} not found.`);
+    showError({location:"createApp",message:`Element with ID "${location}" not found`});
     let errorModal = document.querySelector('err-modal');
     if (!errorModal) {
       errorModal = document.createElement('err-modal');
@@ -78,7 +127,6 @@ function createApp(location, components) {
     const componentElement = document.createElement(name);
     appRoot.appendChild(componentElement);
   });
-
   bindStateAndEvents(appRoot);
   return appRoot;
 }
@@ -507,27 +555,9 @@ function createComponent(config) {
   }
   customElements.define(name, Component);
 }
-const Effect = { 
-  manageEffect, 
-  manageMemo, 
-  manageCallback 
-};
-const State = { 
-  manageState, 
-  manageRef,
-  manageContext
-};
-const Hook = { 
-  State, 
-  Effect 
-};
-const Component = { 
-  createComponent, 
-  Hook 
-};
-const Vis = { 
-  createApp, 
-  Component,
-  use 
-};
+const Effect = { manageEffect, manageMemo, manageCallback };
+const State = { manageState, manageRef, manageContext };
+const Hook = { State, Effect };
+const Component = { createComponent, Hook };
+const Vis = { createApp, Component,use };
 export { Vis };
