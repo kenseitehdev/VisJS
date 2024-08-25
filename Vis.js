@@ -314,16 +314,13 @@ class CustomComponent extends HTMLElement {
   bindEvents() {
     // Implement event binding here
   }
-
   mount() {
     this.lifecycle.isMounted = true;
     this.update();
   }
-
   update() {
     this.lifecycle.isUpdated = true;
   }
-
   destroy() {
     this.lifecycle.isDestroyed = true;
   }
