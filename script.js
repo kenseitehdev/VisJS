@@ -182,7 +182,9 @@ todoList: [
       background-color: royalblue;
       color: white;
     }
-
+code{
+    margin:20px;
+}
   `
 });
 

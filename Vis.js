@@ -310,6 +310,23 @@ class CustomComponent extends HTMLElement {
       });
     });
   }
+        
+  bindEvents() {
+    // Implement event binding here
+  }
+
+  mount() {
+    this.lifecycle.isMounted = true;
+    this.update();
+  }
+
+  update() {
+    this.lifecycle.isUpdated = true;
+  }
+
+  destroy() {
+    this.lifecycle.isDestroyed = true;
+  }
   evaluateCondition(condition) {
     try {
       return new Function('return ' + condition).call(this.state);
@@ -380,23 +397,18 @@ function manageContext({ context, children }) {
 }
 function createComponent(config) {
   const { name, data, template, methods, styles = "" } = config;
-
   class Component extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
       this.state = typeof data === 'function' ? data() : { ...data };
-
-      // Bind methods to the component
       for (const key in methods) {
         if (typeof methods[key] === 'function') {
           this[key] = methods[key].bind(this);
         }
       }
-
       this.render();
     }
-
     render() {
       const parsedTemplate = this.parseTemplate(template, this.state);
       this.shadowRoot.innerHTML = `
@@ -405,14 +417,10 @@ function createComponent(config) {
       `;
       this.attachEventListeners();
     }
-
 parseTemplate(template, state) {
   const container = document.createElement('div');
   container.innerHTML = template.trim(); // Trim to remove extra spaces
-
-  // Replace placeholders with actual state values
   container.innerHTML = container.innerHTML.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => {
-    // Access nested state values
     const keys = key.split('.');
     let value = state;
     keys.forEach(k => {
@@ -420,85 +428,62 @@ parseTemplate(template, state) {
     });
     return value !== undefined ? value : match;
   });
-
-  // Process directives recursively
   this.processDirectives(container, state);
 
   return container.innerHTML;
 }
     processDirectives(container, state) {
-      // Handle `v-for` first to expand loops
       container.querySelectorAll('[v-for]').forEach(el => this.processVFor(el, state));
-
-      // Handle `v-if`, `v-elif`, and `v-else` next for conditional rendering
       container.querySelectorAll('[v-if], [v-elif], [v-else]').forEach(el => this.processVIfElse(el, state));
     }
-
     processVFor(el, state) {
       const vForAttr = el.getAttribute('v-for');
       if (!vForAttr) return;
-
       const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
       const [item, index] = itemPart.includes(',')
         ? itemPart.replace('(', '').replace(')', '').split(',').map(str => str.trim())
         : [itemPart, null];
       const items = state[listName] || [];
-
-      // Create a fragment to store generated elements
       const fragment = document.createDocumentFragment();
       const templateContent = el.cloneNode(true);
       templateContent.removeAttribute('v-for');
-
       items.forEach((itemData, idx) => {
         const itemScope = { ...state, [item]: itemData };
         if (index !== null) {
           itemScope[index] = idx;
         }
-
         const itemElement = templateContent.cloneNode(true);
         itemElement.innerHTML = this.replacePlaceholders(itemElement.innerHTML, itemScope).trim();
-
-        // Recursively process nested directives within the loop
         this.processDirectives(itemElement, itemScope);
-
         fragment.appendChild(itemElement);
       });
-
-      // Replace the original element with the processed fragment
       el.replaceWith(fragment);
     }
-
     processVIfElse(el, state) {
       const vIfAttr = el.getAttribute('v-if');
       const vElifAttr = el.getAttribute('v-elif');
       const vElseAttr = el.getAttribute('v-else');
-
-      // Determine whether to show the element
       let shouldRender = false;
       if (vIfAttr) {
         shouldRender = this.evaluateCondition(vIfAttr, state);
       } else if (vElifAttr) {
         shouldRender = this.evaluateCondition(vElifAttr, state);
       } else if (vElseAttr) {
-        // v-else should only render if no previous v-if or v-elif has been true
         const prevSiblings = Array.from(el.previousElementSibling ? el.previousElementSibling.parentNode.children : []);
         const prevConditionMet = prevSiblings.some(sibling => sibling.getAttribute('v-if') || sibling.getAttribute('v-elif'));
         shouldRender = !prevConditionMet;
       }
-
       if (!shouldRender) {
         el.remove();
       } else {
         el.removeAttribute(vIfAttr ? 'v-if' : vElifAttr ? 'v-elif' : 'v-else');
       }
     }
-
     replacePlaceholders(template, scope) {
       return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
         return scope[key] !== undefined ? scope[key] : '';
       });
     }
-
     evaluateCondition(condition, scope) {
       try {
         const cleanedCondition = condition.replace(/{{|}}/g, '').trim();
@@ -508,7 +493,6 @@ parseTemplate(template, state) {
         return false;
       }
     }
-
     attachEventListeners() {
       this.shadowRoot.querySelectorAll('[v-on\\:click]').forEach(el => {
         const event = el.getAttribute('v-on:click');
@@ -518,7 +502,6 @@ parseTemplate(template, state) {
       });
     }
   }
-
   customElements.define(name, Component);
 }
 const Effect = { manageEffect, manageMemo, manageCallback };
