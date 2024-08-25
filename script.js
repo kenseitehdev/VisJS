@@ -3,46 +3,57 @@ import {Vis} from "./Vis.js";
 Vis.Component.createComponent({
   name: 'counter-component',
   data: () => ({
-    counterState: 0
+    counterState: 0,
   }),
   methods: {
     increment() {
       this.state.counterState++;
-      this.render();
+      this.render(); // Trigger re-render after state change
     }
   },
   template: `
-    <button class="button" v-on:click="increment">Count: <span>{{ counterState }}</span></button>
-  
+<div class="button-container">
+  <button class="button" v-on:click="increment">Count: {{ counterState }}</button>
+</div>
+  `,
+  styles: `
+.button-container {
+  display: flex;
+  justify-content: center; /* Horizontal alignment */
+}
 
-    `,
-  styles: `.button {
-      padding: 15px 30px;
-      border: 2px solid royalblue;
-      border-radius: 5px;
-      background-color: royalblue;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      margin: 30px 20px;
-      transition: background-color 0.3s ease, border 0.3s ease, color 0.3s ease;
-    }
-    .button:hover {
-      background-color: darkblue;
-    }`
+.button {
+  padding: 15px 30px;
+  border: 2px solid royalblue;
+  border-radius: 5px;
+  background-color: royalblue;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: block; /* Ensure the button behaves as a block element */
+  margin: 30px; /* Adjust margin if needed */
+  transition: background-color 0.3s ease, border 0.3s ease, color 0.3s ease;
+}
+
+.button:hover {
+  background-color: darkblue;
+}
+  `
 });
 Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
 todoList: [
-    "1. v-on: custom modifiers with mustache syntax",
-    "2. Nested Loops and advanced directive functionality",
-    "3. Add VDOM to ShadowDOM",
-    "4. Security",
+    "1. Current",
+    "&nbsp;&nbsp;&nbsp;&nbsp;a. Add VDOM to ShadowDOM",
+    "2. Security",
     " &nbsp;&nbsp;&nbsp;&nbsp;a. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
-   "&nbsp;&nbsp;&nbsp;&nbsp;c. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
-    "5. New Features",
+    "&nbsp;&nbsp;&nbsp;&nbsp;c. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
+    "3. Improvements",
+    "&nbsp;&nbsp;&nbsp;&nbsp;a. Refactor `manageState`, `manageEffect`, and `manageMemo` for consolidation – Evaluate the necessity and potential combination of these hooks to streamline framework usage.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;b. Assess `manageCallback` and `manageEffect` for potential combination – Determine if these functions should be merged or kept separate.",
+    "4. New Features",
     "&nbsp;&nbsp;&nbsp;&nbsp;a. Short Term",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I. v-content",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;II. v-on:mount",
@@ -54,7 +65,7 @@ todoList: [
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;II. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.",
 ],
-    showAlert: true
+    showAlert: true,
   }),
   methods: {
     handleStartClick() {
@@ -89,7 +100,6 @@ todoList: [
         </svg>
       </div>
       <div class="title">Welcome to Your Vis.js App</div>
-    <div v-if="{{1==1}}">true</div><div v-else>false</div>
       <div class="description">Edit <code> src/app.js </code> to start</div>
       <div class="btn-group my-2">
         <button class="button" v-on:click="handleStartClick">Get Started</button>
@@ -99,31 +109,33 @@ todoList: [
       </div>
       <counter-component></counter-component>
         <span>Todo:</span>
-        <ul class="todo" v-for="(item, index) in todoList">
-          <li class"todo-item">{{ item }}</li>
-        </ul>
+<ul class="todo" v-for="(item, index) in todoList">
+  <li v-bind="item" class="todo-item">
+{{ item }}</li>
+</ul>
       </div>
     </div>
   `,
   styles: `
-    .todo {
-      list-style: none;
-      text-align: left;
+    ul{
+        list-style:none;
     }
-    .todo-item {
-      list-style: none;
-      text-align: left;
+    .container .logo{
+        display:flex;
+        justify-content:center;
+        align-items:center;
     }
-    .container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      margin-top:0px;
-      justify-content: flex-start;
-      overflow:hidden;
-      align-items: center;  
-      background-color: #F0F0F0;
-      margin:0px;
+    .container .description{
+
+        display:flex;
+        justify-content:center;
+        align-items:center;
+    }
+    .container .title{
+      justify-content:flex-start;
+        align-items:center;
+        text-align:center;
+      margin:auto;
       padding:0px;
     }
     .title {
