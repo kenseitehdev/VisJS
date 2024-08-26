@@ -34,7 +34,16 @@ Vis.Component.createComponent({
   margin: 30px; /* Adjust margin if needed */
   transition: background-color 0.3s ease, border 0.3s ease, color 0.3s ease;
 }
-
+1. pattern matching
+2. The system identified harmful traffic as harmless and allowed it to pass without generating any alerts
+3. false positive 
+4. host based ids
+5. An intrusion detection system monitors data packets for malicious or unauthorized traffic
+6. ips 
+7. It detects malicious or unusual incoming and outgoing traffic in real time.
+8. pids 
+9. signature based ids 
+10. update the signature files
 .button:hover {
   background-color: darkblue;
 }
@@ -43,18 +52,28 @@ Vis.Component.createComponent({
 Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
-    todoList: [
-      { text: "Refactor Directives to take obj input", done: false },
-      { text: "Add VDOM to ShadowDOM", done: false },
-      { text: "Current: Add VDOM to ShadowDOM", done: false },
-      { text: "Security: Input Sanitation", done: false },
-      { text: "Security: XSS Protection", done: false },
-      { text: "Security: Content Security Policy", done: false },
-      { text: "Refactor `manageState`, `manageEffect`, and `manageMemo` for consolidation", done: false },
-      { text: "Add VDOM to ShadowDOM", done: false },
+ todoList: [
+        { id: 1, text: "Add v-on:hover", done: false },
+        { id: 2, text: "Add v-on:submit", done: false },
+        { id: 3, text: "Add v-on:change", done: false },
+        { id: 4, text: "Add v-on:error", done: false },
+        { id: 5, text: "Add VDOM to ShadowDOM", done: false },
+        { id: 6, text: "Add two-way data binding", done: false },
+        { id: 7, text: "Add global state", done: false },
+        { id: 8, text: "Add state persistence", done: false },
+        { id: 9, text: "Add v-content", done: false },
+        { id: 10, text: "Add v-on:mount", done: false },
+        { id: 11, text: "Add v-on:destroy", done: false },
+        { id: 12, text: "Add v-on:update", done: false },
+        { id: 13, text: "add v-component", done: false },
+        { id: 14, text: "add error modal and handling", done: false },
+        { id: 15, text: "Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.", done: false },
+        { id: 16, text: "Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.", done: false },
+        { id: 17, text: "Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.", done: false },
+        { id: 18, text: "Cross-platform native support – Ensure that the application runs smoothly across different platforms.", done: false },
+        { id: 19, text: "Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.", done: false }
     ],
-    showAlert: true,
-    newTodo: ''  // Ensure this exists if used in addTodo method
+    newTodo: ''
   }),
   methods: {
     addTodo() {
@@ -76,54 +95,86 @@ Vis.Component.createComponent({
   template: `
     <div class="todo-container">
       <h2>To-Do List</h2>
-      <button v-on:click="addTodo">Add</button>
-      <ul>
-        <li v-for="(todo, index) in todoList" :key="index">
-          {{ index }} {{ todo.text }}
+      <div class="input-container">
+        <input type="text" v-model="newTodo" placeholder="Add a new task" />
+        <button v-on:click="addTodo">Add</button>
+      </div>
+      <ul class="todo-list">
+
+        <li class="todo-item" v-for="(todo, index) in todoList" :key="todo.id">
+    {{ todo.id  }}.
+          <input type="checkbox" v-model="todo.done" v-on:change="toggleTodo(index)" />
+    <span :class="{ 'done': todo.done }">{{ todo.text }}</span>
+          <button v-on:click="deleteTodo(index)" class="delete-button">Delete</button>
         </li>
       </ul>
     </div>
   `,
   styles: `
-    /* Add your styles here */
+    .todo-container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 16px;
+      font-family: Arial, sans-serif;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .input-container {
+      display: flex;
+      margin-bottom: 16px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      margin-right: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .todo-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      margin-bottom: 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    .todo-item input[type="checkbox"] {
+      margin-right: 8px;
+    }
+    .todo-item span.done {
+      text-decoration: line-through;
+      color: #999;
+    }
+    .delete-button {
+      margin-left: auto;
+      background-color: #dc3545;
+    }
+    .delete-button:hover {
+      background-color: #c82333;
+    }
   `
 });
-
 Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
-todoList: [
-    "1. Core Functionality",
-    "&nbsp;&nbsp;&nbsp;&nbsp;a. Add nested v-for",
-    "&nbsp;&nbsp;&nbsp;&nbsp;b. Add nested v-bind",
-    "&nbsp;&nbsp;&nbsp;&nbsp;c. Add nested v-on",
-    "&nbsp;&nbsp;&nbsp;&nbsp;d. Add v-on:hover",
-    "&nbsp;&nbsp;&nbsp;&nbsp;e. Add v-on:submit",
-    "&nbsp;&nbsp;&nbsp;&nbsp;f. Add v-on:change",
-    "&nbsp;&nbsp;&nbsp;&nbsp;f. Add v-on:error",
-    "&nbsp;&nbsp;&nbsp;&nbsp;g. Add object oriented iteration functionality",
-    "&nbsp;&nbsp;&nbsp;&nbsp;h. Add VDOM to ShadowDOM",
-    "&nbsp;&nbsp;&nbsp;&nbsp;i. Add two-way data binding",
-    "&nbsp;&nbsp;&nbsp;&nbsp;j. Add global state",
-    "&nbsp;&nbsp;&nbsp;&nbsp;k. Add state persistence",
-    "2. Security",
-    " &nbsp;&nbsp;&nbsp;&nbsp;a. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
-    "&nbsp;&nbsp;&nbsp;&nbsp;b. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
-    "&nbsp;&nbsp;&nbsp;&nbsp;c. Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.",
-    "3. Improvements",
-    "&nbsp;&nbsp;&nbsp;&nbsp;a. Refactor `manageState`, `manageEffect`, and `manageMemo` for consolidation – Evaluate the necessity and potential combination of these hooks to streamline framework usage.",
-    "&nbsp;&nbsp;&nbsp;&nbsp;b. Assess `manageCallback` and `manageEffect` for potential combination – Determine if these functions should be merged or kept separate.",
-    "4. New Features",
-    "&nbsp;&nbsp;&nbsp;&nbsp;a. Short Term",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I. v-content",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;II. v-on:mount",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;III. v-on:destroy",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IV. v-on:update",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V. v-component",
-    "&nbsp;&nbsp;&nbsp;&nbsp;b. Long Term",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;II. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.",
-],
     showAlert: true,
   }),
   methods: {
@@ -143,7 +194,6 @@ todoList: [
     }
   },
   template: `
-
     <div class="container">
       <div class="logo">
        
@@ -167,11 +217,6 @@ todoList: [
         <button class="button" v-on:click="handleStartClick">Examples</button>
       </div>
       <counter-component></counter-component>
-        <span>Todo:</span>
-<ul class="todo" v-for="(item, index) in todoList">
-  <li v-bind="item" class="todo-item">
-{{ item }}</li>
-</ul>
       </div>
     <todo-list></todo-list>
     </div>

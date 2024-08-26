@@ -1,5 +1,5 @@
-function defineCustomElement(tagName, template) {
-  class CustomElement extends HTMLElement {
+const defineCustomElement = (tagName, template) => {
+  customElements.define(tagName, class extends HTMLElement {
     constructor() {
       super();
       const shadow = this.attachShadow({ mode: 'open' });
@@ -10,21 +10,14 @@ function defineCustomElement(tagName, template) {
     connectedCallback() {
       bindStateAndEvents(this.shadowRoot);
     }
-  }
-  customElements.define(tagName, CustomElement);
-}
-function createApp(location, components) {
-  const appRoot = document.getElementById(location);
-  if (!appRoot) {
-    showError({ location: "createApp", message: `Element with ID "${location}" not found` });
-    return;
-  }
-  components.forEach(({ name }) => {
-    const componentElement = document.createElement(name);
-    appRoot.appendChild(componentElement);
   });
+};
+const createApp = (location, components) => {
+  const appRoot = document.getElementById(location);
+  if (!appRoot) return showError({ location: "createApp", message: `Element with ID "${location}" not found` });
+  components.forEach(({ name }) => appRoot.appendChild(document.createElement(name)));
   return appRoot;
-}
+};
 class CustomComponent extends HTMLElement {
   constructor() {
     super();
@@ -51,47 +44,32 @@ class CustomComponent extends HTMLElement {
     this.removeEventListeners();
   }
   removeEventListeners() {
-    this.eventListeners.forEach(({ event, handler }) => {
-      this.removeEventListener(event, handler);
-    });
+    this.eventListeners.forEach(({ event, handler }) => this.removeEventListener(event, handler));
     this.eventListeners = [];
   }
   render() {
-    const shadowRoot = this.shadowRoot;
+    const { shadowRoot } = this;
     shadowRoot.innerHTML = `
-      <style>
-        ${this.styles}
-      </style>
+      <style>${this.styles}</style>
       ${this.template}
     `;
     this.applyDirectives();
   }
   applyDirectives() {
-    this.shadowRoot.querySelectorAll('[v-for]').forEach(el => {
-      this.processVFor(el);
-    });
-    this.shadowRoot.querySelectorAll('[v-if]').forEach(el => {
-      this.applyIf(el);
-    });
-    this.shadowRoot.querySelectorAll('[v-else]').forEach(el => {
-      this.applyElse(el);
-    });
-    this.shadowRoot.querySelectorAll('[v-bind]').forEach(el => {
-      this.applyBind(el);
-    });
-    this.shadowRoot.querySelectorAll('[v-on\\:click]').forEach(el => {
-      this.attachEvent(el, 'click');
-    });
+    const { shadowRoot } = this;
+    shadowRoot.querySelectorAll('[v-for]').forEach(el => this.processVFor(el));
+    shadowRoot.querySelectorAll('[v-if]').forEach(el => this.applyIf(el));
+    shadowRoot.querySelectorAll('[v-else]').forEach(el => this.applyElse(el));
+    shadowRoot.querySelectorAll('[v-bind]').forEach(el => this.applyBind(el));
+    shadowRoot.querySelectorAll('[v-on\\:click]').forEach(el => this.attachEvent(el, 'click'));
   }
   applyIf(el) {
-    const condition = el.getAttribute('v-if');
-    el.style.display = this.evaluateCondition(condition) ? 'block' : 'none';
+    el.style.display = this.evaluateCondition(el.getAttribute('v-if')) ? 'block' : 'none';
   }
   applyElse(el) {
     const prevEl = el.previousElementSibling;
     if (prevEl && prevEl.hasAttribute('v-if')) {
-      const condition = prevEl.getAttribute('v-if');
-      el.style.display = !this.evaluateCondition(condition) ? 'block' : 'none';
+      el.style.display = !this.evaluateCondition(prevEl.getAttribute('v-if')) ? 'block' : 'none';
     }
   }
   applyBind(el) {
@@ -120,10 +98,7 @@ class CustomComponent extends HTMLElement {
     const templateContent = el.cloneNode(true);
     templateContent.removeAttribute('v-for');
     items.forEach((itemData, idx) => {
-      const itemScope = { ...this.state, [item]: itemData };
-      if (index !== null) {
-        itemScope[index] = idx;
-      }
+      const itemScope = { ...this.state, [item]: itemData, ...(index && { [index]: idx }) };
       const itemElement = templateContent.cloneNode(true);
       itemElement.innerHTML = this.replacePlaceholders(itemElement.innerHTML, itemScope).trim();
       this.applyDirectives.call(itemElement, itemScope);
@@ -132,9 +107,7 @@ class CustomComponent extends HTMLElement {
     el.replaceWith(fragment);
   }
   replacePlaceholders(template, scope) {
-    return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
-      return scope[key] !== undefined ? scope[key] : '';
-    });
+    return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => scope[key] !== undefined ? scope[key] : '');
   }
   evaluateCondition(condition) {
     try {
@@ -145,10 +118,8 @@ class CustomComponent extends HTMLElement {
       return false;
     }
   }
-  bindEvents() {
-  }
-  cleanupEffects() {
-  }
+  bindEvents() {}
+  cleanupEffects() {}
   showError(message) {
     console.error(message);
   }
@@ -164,68 +135,41 @@ function createComponent(config) {
         isMounted: false,
         isUpdated: false,
         isDestroyed: false,
-        mount: this.mount.bind(this),
-        update: this.update.bind(this),
-        destroy: this.destroy.bind(this),
+        mount: () => { this.lifecycle.isMounted = true; onMount?.call(this); },
+        update: () => { this.lifecycle.isUpdated = true; onUpdate?.call(this); },
+        destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
       };
-      if (methods && typeof methods === 'object') {
-        for (const key in methods) {
-          if (typeof methods[key] === 'function') {
-            this[key] = methods[key].bind(this);
-          } else {
-            console.warn(`Method ${key} is not a function and cannot be bound.`);
-          }
-        }
-      }
+      Object.entries(methods).forEach(([key, method]) => {
+        if (typeof method === 'function') this[key] = method.bind(this);
+        else console.warn(`Method ${key} is not a function and cannot be bound.`);
+      });
       this.render();
-    }
-    mount() {
-      this.lifecycle.isMounted = true;
-      if (typeof onMount === 'function') onMount.call(this);
-    }
-    update() {
-      this.lifecycle.isUpdated = true;
-      if (typeof onUpdate === 'function') onUpdate.call(this);
-    }
-    destroy() {
-      this.lifecycle.isDestroyed = true;
-      if (typeof onDestroy === 'function') onDestroy.call(this);
     }
     connectedCallback() {
       this.render();
-      this.bindEvents();
+      //this.bindEvents();
       this.lifecycle.mount();
     }
     disconnectedCallback() {
       this.lifecycle.destroy();
-      this.cleanupEffects();
+      //this.cleanupEffects();
       this.removeEventListeners();
     }
-  bindEvents() {
-  }
-  cleanupEffects() {
-  }
-  showError(message) {
-    console.error(message);
-  }
+    removeEventListeners() {
+      this.eventListeners?.forEach(({ event, handler }) => this.removeEventListener(event, handler));
+      this.eventListeners = [];
+    }
     render() {
-      const parsedTemplate = this.parseTemplate(template, this.state);
       this.shadowRoot.innerHTML = `
         <style>${styles}</style>
-        ${parsedTemplate}
+        ${this.parseTemplate(template, this.state)}
       `;
       this.attachEventListeners();
     }
     parseTemplate(template, state) {
       const container = document.createElement('div');
-      container.innerHTML = template.trim();
-      container.innerHTML = container.innerHTML.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => {
-        const keys = key.split('.');
-        let value = state;
-        keys.forEach(k => {
-          value = value[k];
-        });
-        return value !== undefined ? value : match;
+      container.innerHTML = template.trim().replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => {
+        return this.getNestedValue(key, state) ?? match;
       });
       this.processDirectives(container, state);
       return container.innerHTML;
@@ -234,53 +178,57 @@ function createComponent(config) {
       container.querySelectorAll('[v-for]').forEach(el => this.processVFor(el, state));
       container.querySelectorAll('[v-if], [v-elif], [v-else]').forEach(el => this.processVIfElse(el, state));
     }
-    processVFor(el, state) {
-      const vForAttr = el.getAttribute('v-for');
-      if (!vForAttr) return;
-      const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
-      const [item, index] = itemPart.includes(',')
-        ? itemPart.replace('(', '').replace(')', '').split(',').map(str => str.trim())
-        : [itemPart, null];
-      const items = state[listName] || [];
-      const fragment = document.createDocumentFragment();
-      const templateContent = el.cloneNode(true);
-      templateContent.removeAttribute('v-for');
-      items.forEach((itemData, idx) => {
-        const itemScope = { ...state, [item]: itemData };
-        if (index !== null) {
-          itemScope[index] = idx;
-        }
-        const itemElement = templateContent.cloneNode(true);
-        itemElement.innerHTML = this.replacePlaceholders(itemElement.innerHTML, itemScope).trim();
-        this.processDirectives(itemElement, itemScope);
-        fragment.appendChild(itemElement);
-      });
-      el.replaceWith(fragment);
-    }
+processVFor(el, state) {
+  const vForAttr = el.getAttribute('v-for');
+  if (!vForAttr) return;
+
+  // Parse the v-for attribute
+  const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
+  const [item, index] = itemPart.includes(',')
+    ? itemPart.replace(/[()]/g, '').split(',').map(str => str.trim())
+    : [itemPart, null];
+
+  // Get the list from state, default to an empty array
+  const items = state[listName] || [];
+
+  // Create a fragment to hold the generated content
+  const fragment = document.createDocumentFragment();
+  const templateContent = el.cloneNode(true);
+  templateContent.removeAttribute('v-for');
+
+  // Iterate through the items (array or object)
+  (Array.isArray(items)
+    ? items.map((value, idx) => ({ value, index: idx })) // For arrays
+    : Object.entries(items).map(([key, value]) => ({ key, value }))) // For objects
+  .forEach(({ value, index, key }) => {
+    // Define the scope for each iteration
+    const itemScope = { ...state, [item]: value, ...(index !== undefined ? { [index]: index } : {}), ...(key !== undefined ? { [`${item}Key`]: key } : {}) };
+
+    // Clone and update the template for each item
+    const itemElement = templateContent.cloneNode(true);
+    itemElement.innerHTML = this.replacePlaceholders(itemElement.innerHTML, itemScope).trim();
+    this.processDirectives(itemElement, itemScope);
+
+    // Append the processed element to the fragment
+    fragment.appendChild(itemElement);
+  });
+
+  // Replace the original element with the new content
+  el.replaceWith(fragment);
+}
     processVIfElse(el, state) {
-      const vIfAttr = el.getAttribute('v-if');
-      const vElifAttr = el.getAttribute('v-elif');
-      const vElseAttr = el.getAttribute('v-else');
-      let shouldRender = false;
-      if (vIfAttr) {
-        shouldRender = this.evaluateCondition(vIfAttr, state);
-      } else if (vElifAttr) {
-        shouldRender = this.evaluateCondition(vElifAttr, state);
-      } else if (vElseAttr) {
-        const prevSiblings = Array.from(el.previousElementSibling ? el.previousElementSibling.parentNode.children : []);
-        const prevConditionMet = prevSiblings.some(sibling => sibling.getAttribute('v-if') || sibling.getAttribute('v-elif'));
-        shouldRender = !prevConditionMet;
-      }
-      if (!shouldRender) {
-        el.remove();
-      } else {
-        el.removeAttribute(vIfAttr ? 'v-if' : vElifAttr ? 'v-elif' : 'v-else');
-      }
+      const condition = el.getAttribute('v-if') || el.getAttribute('v-elif') || el.getAttribute('v-else');
+      const prevEl = el.previousElementSibling;
+      const prevConditionMet = prevEl && (prevEl.hasAttribute('v-if') || prevEl.hasAttribute('v-elif'));
+      const shouldRender = condition ? this.evaluateCondition(condition, state) : !prevConditionMet;
+      if (!shouldRender) el.remove();
+      else el.removeAttribute(condition.startsWith('v-if') ? 'v-if' : condition.startsWith('v-elif') ? 'v-elif' : 'v-else');
+    }
+    getNestedValue(key, scope) {
+      return key.split('.').reduce((acc, part) => acc?.[part], scope);
     }
     replacePlaceholders(template, scope) {
-      return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
-        return scope[key] !== undefined ? scope[key] : '';
-      });
+      return template.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => this.getNestedValue(key, scope) ?? match);
     }
     evaluateCondition(condition, scope) {
       try {
@@ -291,15 +239,10 @@ function createComponent(config) {
         return false;
       }
     }
-      removeEventListeners(){
-
-      }
     attachEventListeners() {
       this.shadowRoot.querySelectorAll('[v-on\\:click]').forEach(el => {
-        const event = el.getAttribute('v-on:click');
-        if (this[event] && typeof this[event] === 'function') {
-          el.addEventListener('click', this[event]);
-        }
+        const handler = el.getAttribute('v-on:click');
+        if (this[handler] instanceof Function) el.addEventListener('click', this[handler]);
       });
     }
   }
