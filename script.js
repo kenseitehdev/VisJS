@@ -41,11 +41,71 @@ Vis.Component.createComponent({
   `
 });
 Vis.Component.createComponent({
+  name: 'todo-list',
+  data: () => ({
+    todoList: [
+      { text: "Refactor Directives to take obj input", done: false },
+      { text: "Add VDOM to ShadowDOM", done: false },
+      { text: "Current: Add VDOM to ShadowDOM", done: false },
+      { text: "Security: Input Sanitation", done: false },
+      { text: "Security: XSS Protection", done: false },
+      { text: "Security: Content Security Policy", done: false },
+      { text: "Refactor `manageState`, `manageEffect`, and `manageMemo` for consolidation", done: false },
+      { text: "Add VDOM to ShadowDOM", done: false },
+    ],
+    showAlert: true,
+    newTodo: ''  // Ensure this exists if used in addTodo method
+  }),
+  methods: {
+    addTodo() {
+      if (this.newTodo.trim()) {
+        this.todoList.push({ text: this.newTodo, done: false });
+        this.newTodo = '';
+        this.update();
+      }
+    },
+    toggleTodo(index) {
+      this.todoList[index].done = !this.todoList[index].done;
+      this.update();
+    },
+    deleteTodo(index) {
+      this.todoList.splice(index, 1);
+      this.update();
+    }
+  },
+  template: `
+    <div class="todo-container">
+      <h2>To-Do List</h2>
+      <button v-on:click="addTodo">Add</button>
+      <ul>
+        <li v-for="(todo, index) in todoList" :key="index">
+          {{ index }} {{ todo.text }}
+        </li>
+      </ul>
+    </div>
+  `,
+  styles: `
+    /* Add your styles here */
+  `
+});
+
+Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
 todoList: [
-    "1. Current",
-    "&nbsp;&nbsp;&nbsp;&nbsp;a. Add VDOM to ShadowDOM",
+    "1. Core Functionality",
+    "&nbsp;&nbsp;&nbsp;&nbsp;a. Add nested v-for",
+    "&nbsp;&nbsp;&nbsp;&nbsp;b. Add nested v-bind",
+    "&nbsp;&nbsp;&nbsp;&nbsp;c. Add nested v-on",
+    "&nbsp;&nbsp;&nbsp;&nbsp;d. Add v-on:hover",
+    "&nbsp;&nbsp;&nbsp;&nbsp;e. Add v-on:submit",
+    "&nbsp;&nbsp;&nbsp;&nbsp;f. Add v-on:change",
+    "&nbsp;&nbsp;&nbsp;&nbsp;f. Add v-on:error",
+    "&nbsp;&nbsp;&nbsp;&nbsp;g. Add object oriented iteration functionality",
+    "&nbsp;&nbsp;&nbsp;&nbsp;h. Add VDOM to ShadowDOM",
+    "&nbsp;&nbsp;&nbsp;&nbsp;i. Add two-way data binding",
+    "&nbsp;&nbsp;&nbsp;&nbsp;j. Add global state",
+    "&nbsp;&nbsp;&nbsp;&nbsp;k. Add state persistence",
     "2. Security",
     " &nbsp;&nbsp;&nbsp;&nbsp;a. Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.",
@@ -60,7 +120,6 @@ todoList: [
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;III. v-on:destroy",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IV. v-on:update",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V. v-component",
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VI. Custom Directive Support",
     "&nbsp;&nbsp;&nbsp;&nbsp;b. Long Term",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I. Cross-platform native support – Ensure that the application runs smoothly across different platforms.",
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;II. Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.",
@@ -114,6 +173,7 @@ todoList: [
 {{ item }}</li>
 </ul>
       </div>
+    <todo-list></todo-list>
     </div>
   `,
   styles: `
@@ -330,7 +390,7 @@ Vis.Component.createComponent({
       .navbar-menu {
         display: none;
         flex-direction: column;
-        width: 100%;
+        width: 100%!important;
       }
       .navbar-menu.active {
         display: flex;
@@ -341,7 +401,6 @@ Vis.Component.createComponent({
     }
   `
 });
-window.counterState = Vis.Component.Hook.State.manageState(0);
 const appComponent = { name: 'app-component' };
 Vis.createApp('app', [appComponent]);
 function toggleNavbar() {
