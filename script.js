@@ -8,12 +8,12 @@ Vis.Component.createComponent({
   methods: {
     increment() {
       this.state.counterState++;
-      this.render(); // Trigger re-render after state change
+      this.render();
     }
   },
   template: `
 <div class="button-container">
-  <button class="button" v-on:click="increment">Count: {{ counterState }}</button>
+  <button class="button" data-on:click="increment">Count: {{ counterState }}</button>
 </div>
   `,
   styles: `
@@ -21,7 +21,6 @@ Vis.Component.createComponent({
   display: flex;
   justify-content: center; /* Horizontal alignment */
 }
-
 .button {
   padding: 15px 30px;
   border: 2px solid royalblue;
@@ -34,16 +33,6 @@ Vis.Component.createComponent({
   margin: 30px; /* Adjust margin if needed */
   transition: background-color 0.3s ease, border 0.3s ease, color 0.3s ease;
 }
-1. pattern matching
-2. The system identified harmful traffic as harmless and allowed it to pass without generating any alerts
-3. false positive 
-4. host based ids
-5. An intrusion detection system monitors data packets for malicious or unauthorized traffic
-6. ips 
-7. It detects malicious or unusual incoming and outgoing traffic in real time.
-8. pids 
-9. signature based ids 
-10. update the signature files
 .button:hover {
   background-color: darkblue;
 }
@@ -53,31 +42,19 @@ Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
  todoList: [
-        { id: 1, text: "Add v-on:hover", done: false },
-        { id: 2, text: "Add v-on:submit", done: false },
-        { id: 3, text: "Add v-on:change", done: false },
-        { id: 4, text: "Add v-on:error", done: false },
-        { id: 5, text: "Add VDOM to ShadowDOM", done: false },
-        { id: 6, text: "Add two-way data binding", done: false },
-        { id: 7, text: "Add global state", done: false },
-        { id: 8, text: "Add state persistence", done: false },
-        { id: 9, text: "Add v-content", done: false },
-        { id: 10, text: "Add v-on:mount", done: false },
-        { id: 11, text: "Add v-on:destroy", done: false },
-        { id: 12, text: "Add v-on:update", done: false },
-        { id: 13, text: "add v-component", done: false },
-        { id: 14, text: "add error modal and handling", done: false },
-        { id: 15, text: "Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.", done: false },
-        { id: 16, text: "Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.", done: false },
-        { id: 17, text: "Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.", done: false },
-        { id: 18, text: "Cross-platform native support – Ensure that the application runs smoothly across different platforms.", done: false },
-        { id: 19, text: "Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.", done: false }
+        { id: 1, text: "Add VDOM to ShadowDOM", done: false },
+        { id: 2, text: "add error modal and handling", done: false },
+        { id: 3, text: "Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.", done: false },
+        { id: 4, text: "Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.", done: false },
+        { id: 5, text: "Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.", done: false },
+        { id: 6, text: "Cross-platform native support – Ensure that the application runs smoothly across different platforms.", done: false },
+        { id: 7, text: "Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.", done: false }
     ],
     newTodo: ''
   }),
   methods: {
     addTodo() {
-      if (this.newTodo.trim()) {
+      if (this.newTodo.trim(newTodo)) {
         this.todoList.push({ text: this.newTodo, done: false });
         this.newTodo = '';
         this.update();
@@ -96,17 +73,20 @@ Vis.Component.createComponent({
     <div class="todo-container">
       <h2>To-Do List</h2>
       <div class="input-container">
-        <input type="text" v-model="newTodo" placeholder="Add a new task" />
-        <button v-on:click="addTodo">Add</button>
+        <input type="text" data-model="newTodo" placeholder="Add a new task" />
+        <button data-on:click="addTodo">Add</button>
       </div>
       <ul class="todo-list">
 
-        <li class="todo-item" v-for="(todo, index) in todoList" :key="todo.id">
-    {{ todo.id  }}.
-          <input type="checkbox" v-model="todo.done" v-on:change="toggleTodo(index)" />
+        <li class="todo-item" data-for="(todo, index) in todoList" :key="todo.id">
+    {{ todo.id  }}. 
+          <input type="checkbox" data-model="todo.done" data-on:change="toggleTodo(index)" /> 
     <span :class="{ 'done': todo.done }">{{ todo.text }}</span>
-          <button v-on:click="deleteTodo(index)" class="delete-button">Delete</button>
-        </li>
+
+          <button data-on:click="deleteTodo(index)" class="delete-button">Delete</button>
+        
+    </li>
+
       </ul>
     </div>
   `,
@@ -211,10 +191,10 @@ Vis.Component.createComponent({
       <div class="title">Welcome to Your Vis.js App</div>
       <div class="description">Edit <code> src/app.js </code> to start</div>
       <div class="btn-group my-2">
-        <button class="button" v-on:click="handleStartClick">Get Started</button>
-        <button class="button" v-on:click="handleStartClick">Read the Docs</button>
-        <button class="button" v-on:click="handleStartClick">Ecosystem</button>
-        <button class="button" v-on:click="handleStartClick">Examples</button>
+        <button class="button" data-on:click="handleStartClick">Get Started</button>
+        <button class="button" data-on:click="handleStartClick">Read the Docs</button>
+        <button class="button" data-on:click="handleStartClick">Ecosystem</button>
+        <button class="button" data-on:click="handleStartClick">Examples</button>
       </div>
       <counter-component></counter-component>
       </div>
@@ -447,7 +427,7 @@ Vis.Component.createComponent({
   `
 });
 const appComponent = { name: 'app-component' };
-Vis.createApp('app', [appComponent]);
+Vis.App.createApp('app', [appComponent]);
 function toggleNavbar() {
   const menu = document.getElementById('navbar-menu');
   menu.classList.toggle('active');
