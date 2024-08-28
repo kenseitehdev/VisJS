@@ -53,7 +53,6 @@ class CustomComponent extends HTMLElement {
       isUpdated: false,
       isDestroyed: false
     };
-    this.effects = [];
     this.state={};
     this.eventListeners = [];
   }
@@ -150,18 +149,25 @@ class CustomComponent extends HTMLElement {
 }
 function createComponent(config) {
   const { name, data, template, methods = {}, styles = "", onMount, onUpdate, onDestroy } = config;
-
   class Component extends HTMLElement {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
+        this.prevState = { ...this.state }; 
       this.state = typeof data === 'function' ? data() : { ...data };
+      this.methods=methods;
       this.lifecycle = {
         isMounted: false,
         isUpdated: false,
         isDestroyed: false,
-        mount: () => { this.lifecycle.isMounted = true; onMount?.call(this); },
-        update: () => { this.lifecycle.isUpdated = true; onUpdate?.call(this); },
+        mount: () => { this.lifecycle.isMounted = true; this.methods.onMount?.call(this); },
+update: () => { 
+          const hasChanges = this.hasStateChanged();
+          this.lifecycle.isUpdated = hasChanges; // Set isUpdated based on changes
+          if (hasChanges) {
+            this.onUpdate();
+          }
+        },
         destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
       };
       Object.entries(methods).forEach(([key, method]) => {
@@ -170,10 +176,26 @@ function createComponent(config) {
       });
       this.render();
     }
+        hasStateChanged() {
+      // Simple shallow comparison for now
+      return Object.keys(this.state).some(key => this.state[key] !== this.prevState[key]);
+    }
+    setState(newState) {
+      this.prevState = { ...this.state }; // Save current state as previous state
+      this.state = { ...this.state, ...newState }; // Merge new state into current state
+      this.render(); // Re-render component after state change
+    }
+      resetUpdateFlag() {
+    setTimeout(() => {
+      this.lifecycle.isUpdated = false;
+    }, 0);
+  }
 bindEvents(){}
     connectedCallback() {
       this.render();
-      this.lifecycle.mount();
+      this.isMounted=true;
+    this.lifecycle.mount();
+
       this.bindEvents();
       this.attachLifecycleListeners();
     }
@@ -206,9 +228,14 @@ bindEvents(){}
       container.querySelectorAll('[data-for]').forEach(el => this.processVFor(el, state));
       container.querySelectorAll('[data-if], [data-elif], [data-else]').forEach(el => this.processVIfElse(el, state));
       container.querySelectorAll('[data-model]').forEach(el => this.processDataModel(el));
-      container.querySelectorAll('[data-while]').forEach(el => this.processDataWhile(el));
       container.querySelectorAll('[data-content]').forEach(el => this.processDataContent(el));
     }
+    onMount() {
+      }
+      onUpdate() {
+      }
+      onDestroy() {
+      }
     processDataModel(el) {
       const model = el.getAttribute('data-model');
       if (model in this.state) {
@@ -217,23 +244,6 @@ bindEvents(){}
           this.state[model] = el.value;
           this.render();
         });
-      }
-    }
-    processDataWhile(el) {
-      const condition = el.getAttribute('data-while');
-      if (!condition) return;
-      const evaluateWhileCondition = () => this.evaluateCondition(condition, this.state);
-      while (evaluateWhileCondition()) {
-        const clone = el.cloneNode(true);
-        this.processDirectives(clone, this.state);
-        el.parentNode.insertBefore(clone, el);
-      }
-      el.remove();
-    }
-    processDataContent(el) {
-      const content = el.getAttribute('data-content');
-      if (content in this.state) {
-        el.innerHTML = this.state[content];
       }
     }
     processVFor(el, state) {
@@ -345,11 +355,7 @@ const use = (plugin, options = {}) => {
       console.warn('Plugin is already installed');
       return;
     }
-    if (typeof plugin.install === 'function') {
-      plugin.install(Vis, options);
-    } else {
-      console.warn('Plugin does not have an install method');
-    }
+    (typeof plugin.install === 'function') ? plugin.install(Vis, options) : console.warn('Plugin does not have an install method');
     installedPlugins.push(plugin);
   };
 const Component = { createComponent };

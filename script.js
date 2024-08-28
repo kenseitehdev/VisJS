@@ -41,56 +41,94 @@ Vis.Component.createComponent({
 Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
- todoList: [
-        { id: 1, text: "Add VDOM to ShadowDOM", done: false },
-        { id: 2, text: "add error modal and handling", done: false },
-        { id: 3, text: "Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.", done: false },
-        { id: 4, text: "Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.", done: false },
-        { id: 5, text: "Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.", done: false },
-        { id: 6, text: "Cross-platform native support – Ensure that the application runs smoothly across different platforms.", done: false },
-        { id: 7, text: "Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.", done: false }
-    ],
-    newTodo: ''
+todoList: [
+  { id: 1, text: "data-model functionality", done: false },
+  { id: 2, text: "data-on:change functionality", done: false },
+  { id: 3, text: "data-on:hover functionality", done: false },
+  { id: 4, text: "data-on:mouseMove functionality", done: false },
+  { id: 5, text: "data-on:keypress functionality", done: false },
+  { id: 6, text: "data-on:focus functionality", done: false },
+  { id: 7, text: "data-on:submit functionality", done: false },
+  { id: 8, text: "data-on:mount functionality", done: false },
+  { id: 9, text: "data-on:update functionality", done: false },
+  { id: 10, text: "data-on:destroy functionality", done: false },
+  { id: 11, text: "app use functionality", done: false },
+  { id: 12, text: "Add error modal and handling", done: false },
+  { id: 13, text: "Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.", done: false },
+  { id: 14, text: "Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.", done: false },
+  { id: 15, text: "Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.", done: false },
+  { id: 16, text: "Cross-platform native support – Ensure that the application runs smoothly across different platforms.", done: false },
+  { id: 17, text: "Add VDOM to ShadowDOM", done: false },
+  { id: 18, text: "Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.", done: false }
+],
+    newTodo: ""
   }),
   methods: {
-    addTodo() {
-      if (this.newTodo.trim(newTodo)) {
-        this.todoList.push({ text: this.newTodo, done: false });
-        this.newTodo = '';
+      onMount(){
+          this.isMounted ? console.log("mounted") : console.log("not mounted");
+      },
+    addTodo(event) {
+      if (event) event.preventDefault();
+      const newTodoText = this.state.newTodo.trim();
+    console.log(`new item : ${newTodoText}`);
+        let item = document.getElementById('inputTodo');
+        this.state.newTodo= item;
+    console.log(`new item : ${this.state.newTodo}`);
+      if (newTodoText) {
+        this.state.todoList.push({ 
+          id: this.state.todoList.length + 1, 
+          text: newTodoText, 
+          done: false 
+        });
+        this.state.newTodo = "";
         this.update();
+      } else {
+          console.log(`input element value : ${newTodoText}`);
+        console.error("Input element is empty or not found.");
       }
     },
     toggleTodo(index) {
-      this.todoList[index].done = !this.todoList[index].done;
-      this.update();
+      if (this.state.todoList && this.state.todoList[index]) {
+        this.state.todoList[index].done = !this.state.todoList[index].done;
+        this.update();
+      }
     },
     deleteTodo(index) {
-      this.todoList.splice(index, 1);
-      this.update();
+      if (this.state.todoList && this.state.todoList[index]) {
+        this.state.todoList.splice(index, 1);
+        this.update(); 
+      }
+    },
+    handleInputChange(event) {
+      // Update newTodo with the input's value
+      this.state.newTodo = event.target.value;
     }
   },
   template: `
     <div class="todo-container">
       <h2>To-Do List</h2>
       <div class="input-container">
-        <input type="text" data-model="newTodo" placeholder="Add a new task" />
-        <button data-on:click="addTodo">Add</button>
+        <form data-on:submit="addTodo">
+          <input id="inputTodo" type="text" data-model="{{ newTodo }}" data-on:input="handleInputChange" placeholder="Add a new task"/>
+          <button type="submit">Add</button>
+        </form>
       </div>
       <ul class="todo-list">
-
         <li class="todo-item" data-for="(todo, index) in todoList" :key="todo.id">
-    {{ todo.id  }}. 
-          <input type="checkbox" data-model="todo.done" data-on:change="toggleTodo(index)" /> 
-    <span :class="{ 'done': todo.done }">{{ todo.text }}</span>
+          {{ todo.id }}. 
+    <input type="checkbox" data-if="{{ todo.done }}" checked data-on:change="() => toggleTodo(index)" /> 
+        <input type="checkbox" data-else data-on:change="() => toggleTodo(index)" /> 
 
-          <button data-on:click="deleteTodo(index)" class="delete-button">Delete</button>
-        
-    </li>
-
+          <span :class="{ 'done': todo.done }">{{ todo.text }}</span>
+          <button data-on:click="() => deleteTodo(index)" class="delete-button">Delete</button>
+        </li>
       </ul>
     </div>
   `,
   styles: `
+    form{
+        width:100%;
+    }
     .todo-container {
       max-width: 400px;
       margin: 0 auto;
@@ -103,10 +141,11 @@ Vis.Component.createComponent({
     .input-container {
       display: flex;
       margin-bottom: 16px;
+      width: 100%;
     }
     input[type="text"] {
-      flex: 1;
-      padding: 8px;
+      width: 80%;
+      padding: 8px 0;
       margin-right: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
@@ -159,6 +198,11 @@ Vis.Component.createComponent({
   }),
   methods: {
     handleStartClick() {
+        this.isMounted ? console.log("component is mounted") : console.log("not mounted");
+        
+        this.isUpdated ? console.log("component is updated") : console.log("not updated");
+                this.isDestroyed ? console.log("component is destroyed") : console.log("not destroyed");
+
       alert('Button clicked!');
     },
     toggleAlert() {
@@ -281,7 +325,6 @@ Vis.Component.createComponent({
   methods: {
     navigate(event, path) {
       event.preventDefault();
-      // Your navigation logic here
     },
     toggleNavbar() {
       const menu = document.querySelector('.navbar-menu');
@@ -432,4 +475,3 @@ function toggleNavbar() {
   const menu = document.getElementById('navbar-menu');
   menu.classList.toggle('active');
 }
-
