@@ -165,7 +165,7 @@ update: () => {
           const hasChanges = this.hasStateChanged();
           this.lifecycle.isUpdated = hasChanges; // Set isUpdated based on changes
           if (hasChanges) {
-            this.onUpdate();
+            this.methods.onUpdate;
           }
         },
         destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
@@ -177,13 +177,11 @@ update: () => {
       this.render();
     }
         hasStateChanged() {
-      // Simple shallow comparison for now
       return Object.keys(this.state).some(key => this.state[key] !== this.prevState[key]);
     }
     setState(newState) {
-      this.prevState = { ...this.state }; // Save current state as previous state
-      this.state = { ...this.state, ...newState }; // Merge new state into current state
-      this.render(); // Re-render component after state change
+      this.prevState = { ...this.state };
+      this.state = { ...this.state, ...newState };       this.render(); // Re-render component after state change
     }
       resetUpdateFlag() {
     setTimeout(() => {
@@ -195,9 +193,7 @@ bindEvents(){}
       this.render();
       this.isMounted=true;
     this.lifecycle.mount();
-
       this.bindEvents();
-      this.attachLifecycleListeners();
     }
     disconnectedCallback() {
       this.lifecycle.destroy();
@@ -228,7 +224,6 @@ bindEvents(){}
       container.querySelectorAll('[data-for]').forEach(el => this.processVFor(el, state));
       container.querySelectorAll('[data-if], [data-elif], [data-else]').forEach(el => this.processVIfElse(el, state));
       container.querySelectorAll('[data-model]').forEach(el => this.processDataModel(el));
-      container.querySelectorAll('[data-content]').forEach(el => this.processDataContent(el));
     }
     onMount() {
       }
@@ -320,20 +315,6 @@ bindEvents(){}
       this.shadowRoot.querySelectorAll('[data-on\\:submit]').forEach(el => {
         const handler = el.getAttribute('data-on:submit');
         if (this[handler] instanceof Function) el.addEventListener('submit', this[handler].bind(this));
-      });
-    }
-    attachLifecycleListeners() {
-      this.shadowRoot.querySelectorAll('[data-on\\:mount]').forEach(el => {
-        const handler = el.getAttribute('data-on:mount');
-        if (this[handler] instanceof Function) this[handler].call(this);
-      });
-      this.shadowRoot.querySelectorAll('[data-on\\:destroy]').forEach(el => {
-        const handler = el.getAttribute('data-on:destroy');
-        if (this[handler] instanceof Function) el.addEventListener('destroy', this[handler].bind(this));
-      });
-      this.shadowRoot.querySelectorAll('[data-on\\:update]').forEach(el => {
-        const handler = el.getAttribute('data-on:update');
-        if (this[handler] instanceof Function) el.addEventListener('update', this[handler].bind(this));
       });
     }
     attachNestedComponents() {
