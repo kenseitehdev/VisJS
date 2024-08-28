@@ -176,6 +176,7 @@ bindEvents(){}
       `;
       this.attachEventListeners();
       this.attachNestedComponents();
+      this.processDirectives(this.shadowRoot, this.state);  
       this.lifecycle.update();
     }
     parseTemplate(template, state) {
