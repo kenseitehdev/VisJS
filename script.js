@@ -42,18 +42,16 @@ Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
     todoList: [
-      { id: 1, text: "cleanupEffects in lifecycle functionality", done: false },
-      { id: 2, text: "Error Handling functionality", done: false },
-      { id: 3, text: "data-model functionality", done: false },
-      { id: 4, text: "data-on:mouseMove functionality", done: false },
-      { id: 5, text: "data-on:keypress functionality", done: false },
-      { id: 6, text: "Add error modal and handling", done: false },
-      { id: 7, text: "Implement input sanitization", done: false },
-      { id: 8, text: "Implement Integrated XSS Protection", done: false },
-      { id: 9, text: "Implement CSP (Content Security Policy)", done: false },
-      { id: 10, text: "Cross-platform native support", done: false },
-      { id: 11, text: "Add VDOM to ShadowDOM", done: false },
-      { id: 12, text: "Module for remote, data cascading client update requests", done: false }
+      { id: 1, text: "data-model functionality", done: false },
+      { id: 2, text: "data-on:mouseMove functionality", done: false },
+      { id: 3, text: "data-on:keypress functionality", done: false },
+      { id: 4, text: "Add error modal and handling", done: false },
+      { id: 5, text: "Implement input sanitization", done: false },
+      { id: 6, text: "Implement Integrated XSS Protection", done: false },
+      { id: 7, text: "Implement CSP (Content Security Policy)", done: false },
+      { id: 8, text: "Cross-platform native support", done: false },
+      { id: 9, text: "Add VDOM to ShadowDOM", done: false },
+      { id: 10, text: "Module for remote, data cascading client update requests", done: false }
     ],
     newTodo: ""
   }),

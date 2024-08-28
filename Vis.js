@@ -142,7 +142,10 @@ class CustomComponent extends HTMLElement {
     }
   }
   bindEvents() {}
-  cleanupEffects() {}
+cleanupEffects() {
+    this.effects.forEach(effect => effect.cleanup && effect.cleanup());
+    this.effects = [];
+  }
   showError(message) {
     console.error(message);
   }
