@@ -2,10 +2,7 @@ const defineCustomElement = (tagName, template) => {
   customElements.define(tagName, class extends HTMLElement {
     constructor() {
       super();
-      const shadow = this.attachShadow({ mode: 'open' });
-      const templateElement = document.createElement('template');
-      templateElement.innerHTML = template;
-      shadow.appendChild(templateElement.content.cloneNode(true));
+      this.attachShadow({ mode: 'open' }).innerHTML = `<template>${template}</template>`.content.cloneNode(true);
     }
     connectedCallback() {
       bindStateAndEvents(this.shadowRoot);
@@ -13,25 +10,20 @@ const defineCustomElement = (tagName, template) => {
   });
 };
 class manageState {
-  constructor() {
-    this.state = {};
-    this.listeners = new Set();
-  }
+  #state = {};
+  #listeners = new Set();
   set(key, value) {
-    this.state[key] = value;
-    this.notify();
+    this.#state[key] = value;
+    this.#listeners.forEach(listener => listener(this.#state));
   }
   get(key) {
-    return this.state[key];
+    return this.#state[key];
   }
   subscribe(listener) {
-    this.listeners.add(listener);
+    this.#listeners.add(listener);
   }
   unsubscribe(listener) {
-    this.listeners.delete(listener);
-  }
-  notify() {
-    this.listeners.forEach(listener => listener(this.state));
+    this.#listeners.delete(listener);
   }
 }
 const state = new manageState();
@@ -42,27 +34,20 @@ const createApp = (location, components) => {
   return appRoot;
 };
 class CustomComponent extends HTMLElement {
-  constructor() {
+  static observedAttributes = ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'];
+constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.lifecycle = {
-      mount: this.mount.bind(this),
-      update: this.update.bind(this),
-      destroy: this.destroy.bind(this),
-      isMounted: false,
-      isUpdated: false,
-      isDestroyed: false
-    };
-    this.state={};
+    this.state = {};
     this.eventListeners = [];
   }
   connectedCallback() {
     this.render();
     this.bindEvents();
-    this.lifecycle.mount();
+    this.lifecycle?.mount?.();
   }
   disconnectedCallback() {
-    this.lifecycle.destroy();
+    this.lifecycle?.destroy?.();
     this.cleanupEffects();
     this.removeEventListeners();
   }
@@ -70,58 +55,28 @@ class CustomComponent extends HTMLElement {
     this.eventListeners.forEach(({ event, handler }) => this.removeEventListener(event, handler));
     this.eventListeners = [];
   }
-  render() {
-    const { shadowRoot } = this;
-    shadowRoot.innerHTML = `
+render() {
+    this.shadowRoot.innerHTML = `
       <style>${this.styles}</style>
       ${this.template}
     `;
     this.applyDirectives();
   }
-  applyDirectives() {
-    const { shadowRoot } = this;
-    shadowRoot.querySelectorAll('[data-for]').forEach(el => this.processVFor(el));
-    shadowRoot.querySelectorAll('[data-if]').forEach(el => this.applyIf(el));
-    shadowRoot.querySelectorAll('[data-else]').forEach(el => this.applyElse(el));
-    shadowRoot.querySelectorAll('[data-bind]').forEach(el => this.applyBind(el));
-    shadowRoot.querySelectorAll('[data-on\\:click]').forEach(el => this.attachEvent(el, 'click'));
-  }
-  applyIf(el) {
-    el.style.display = this.evaluateCondition(el.getAttribute('data-if')) ? 'block' : 'none';
-  }
-  applyElse(el) {
-    const prevEl = el.previousElementSibling;
-    if (prevEl && prevEl.hasAttribute('data-if')) {
-      el.style.display = !this.evaluateCondition(prevEl.getAttribute('data-if')) ? 'block' : 'none';
-    }
-  }
-  applyBind(el) {
-    const [attr, bind] = el.getAttribute('data-bind').split(':').map(s => s.trim());
-    el.setAttribute(attr, this.state[bind]);
-  }
-  attachEvent(el, event) {
-    const handler = el.getAttribute(`data-on:${event}`);
-    el.addEventListener(event, () => {
-      const [fn, args] = handler.split('(');
-      if (this[fn]) {
-        const parsedArgs = args ? args.replace(')', '').split(',').map(arg => arg.trim()) : [];
-        this[fn](...parsedArgs);
-      }
+applyDirectives() {
+    const root = this.shadowRoot;
+    ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'].forEach(attr => {
+      root.querySelectorAll(`[${attr}]`).forEach(el => this[`process${attr.replace(/[^a-zA-Z]/g, '')}`]?.(el));
     });
   }
-  processVFor(el) {
-    const vForAttr = el.getAttribute('data-for');
-    if (!vForAttr) return;
-    const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
-    const [item, index] = itemPart.includes(',')
-      ? itemPart.replace('(', '').replace(')', '').split(',').map(str => str.trim())
-      : [itemPart, null];
+rocessDataFor(el) {
+    const [itemPart, listName] = el.getAttribute('data-for').split(' in ').map(str => str.trim());
+    const [item, index] = itemPart.includes(',') ? itemPart.split(',').map(str => str.trim()) : [itemPart, null];
     const items = this.state[listName] || [];
     const fragment = document.createDocumentFragment();
     const templateContent = el.cloneNode(true);
     templateContent.removeAttribute('data-for');
     items.forEach((itemData, idx) => {
-      const itemScope = { ...this.state, [item]: itemData, ...(index && { [index]: idx }) };
+      const itemScope = { ...this.state, [item]: itemData, ...(index ? { [index]: idx } : {}) };
       const itemElement = templateContent.cloneNode(true);
       itemElement.innerHTML = this.replacePlaceholders(itemElement.innerHTML, itemScope).trim();
       this.applyDirectives.call(itemElement, itemScope);
@@ -129,62 +84,70 @@ class CustomComponent extends HTMLElement {
     });
     el.replaceWith(fragment);
   }
+  processDataIf(el) {
+    el.style.display = this.evaluateCondition(el.getAttribute('data-if')) ? 'block' : 'none';
+  }
+  processDataElse(el) {
+    const prevEl = el.previousElementSibling;
+    if (prevEl && prevEl.hasAttribute('data-if')) {
+      el.style.display = !this.evaluateCondition(prevEl.getAttribute('data-if')) ? 'block' : 'none';
+    }
+  }
+  processDataBind(el) {
+    const [attr, bind] = el.getAttribute('data-bind').split(':').map(s => s.trim());
+    el.setAttribute(attr, this.state[bind]);
+  }
+  processDataOnClick(el) {
+    const handler = el.getAttribute('data-on:click');
+    if (this[handler] instanceof Function) el.addEventListener('click', this[handler].bind(this));
+  }
   replacePlaceholders(template, scope) {
-    return template.replace(/{{\s*(\w+)\s*}}/g, (match, key) => scope[key] !== undefined ? scope[key] : '');
+    return template.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => this.getNestedValue(key, scope) ?? match);
   }
   evaluateCondition(condition) {
     try {
       const cleanedCondition = condition.replace(/{{|}}/g, '').trim();
       return new Function('scope', `with (scope) { return ${cleanedCondition}; }`)(this.state);
-    } catch (error) {
-      console.error('Error evaluating condition:', error);
+    } catch {
       return false;
     }
   }
-  bindEvents() {}
-cleanupEffects() {
-    this.effects.forEach(effect => effect.cleanup && effect.cleanup());
-    this.effects = [];
+  getNestedValue(key, scope) {
+    return key.split('.').reduce((acc, part) => acc?.[part], scope);
   }
-  showError(message) {
-    console.error(message);
+  bindEvents() {}
+  cleanupEffects() {
+    this.effects?.forEach(effect => effect.cleanup?.());
+    this.effects = [];
   }
 }
 function createComponent(config) {
   const { name, data, template, methods = {}, styles = "", onMount, onUpdate, onDestroy } = config;
-  class Component extends HTMLElement {
+  class Component extends CustomComponent {
     constructor() {
       super();
-      this.attachShadow({ mode: 'open' });
-        this.prevState = { ...this.state }; 
+      this.prevState = { ...this.state };
       this.state = typeof data === 'function' ? data() : { ...data };
-      this.methods=methods;
-      this.lifecycle = {
-        isMounted: false,
-        isUpdated: false,
-        isDestroyed: false,
-        mount: () => { this.lifecycle.isMounted = true; this.methods.onMount?.call(this); },
-update: () => { 
-          const hasChanges = this.hasStateChanged();
-          this.lifecycle.isUpdated = hasChanges; // Set isUpdated based on changes
-          if (hasChanges) {
-            this.methods.onUpdate;
-          }
-        },
-        destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
-      };
       Object.entries(methods).forEach(([key, method]) => {
         if (typeof method === 'function') this[key] = method.bind(this);
         else console.warn(`Method ${key} is not a function and cannot be bound.`);
       });
+      this.lifecycle = {
+        mount: () => { this.lifecycle.isMounted = true; onMount?.call(this); },
+        update: () => { if (this.hasStateChanged()) { this.lifecycle.isUpdated = true; onUpdate?.call(this); } },
+        destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
+        isMounted: false,
+        isUpdated: false,
+        isDestroyed: false
+      };
       this.render();
     }
-        hasStateChanged() {
+    hasStateChanged() {
       return Object.keys(this.state).some(key => this.state[key] !== this.prevState[key]);
     }
     setState(newState) {
       this.prevState = { ...this.state };
-      this.state = { ...this.state, ...newState };       this.render(); // Re-render component after state change
+      this.state = { ...this.state, ...newState };       this.render();
     }
       resetUpdateFlag() {
     setTimeout(() => {
@@ -335,7 +298,7 @@ bindEvents(){}
   customElements.define(name, Component);
 }
 const use = (plugin, options = {}) => {
-    if (installedPlugins.includes(plugin)) {
+    if(installedPlugins.includes(plugin)) {
       console.warn('Plugin is already installed');
       return;
     }

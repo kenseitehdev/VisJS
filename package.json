@@ -1,6 +1,6 @@
 {
   "name": "visjs-microframework",
-  "version": "0.8.0",
+  "version": "0.8.5",
   "description": "A lightweight frontend framework.",
   "main": "Vis.js",
   "scripts": {
