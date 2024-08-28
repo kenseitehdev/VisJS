@@ -41,60 +41,102 @@ Vis.Component.createComponent({
 Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
-todoList: [
-  { id: 1, text: "cleanupEffects in lifecycle functionality", done: false },
-  { id: 4, text: "Error Hnadling functionality", done: false },
-  { id: 5, text: "data-model functionality", done: false },
-  { id: 6, text: "data-on:mouseMove functionality", done: false },
-  { id: 7, text: "data-on:keypress functionality", done: false },
-  { id: 8, text: "Add error modal and handling", done: false },
-  { id: 9, text: "Implement input sanitization – Protect against security vulnerabilities by sanitizing user inputs.", done: false },
-  { id: 12, text: "Implement Integrated XSS Protection – Add cross-site scripting (XSS) protection to safeguard your application.", done: false },
-  { id: 13, text: "Implement CSP (Content Security Policy) – Set up a Content Security Policy to prevent unauthorized resource loading.", done: false },
-  { id: 14, text: "Cross-platform native support – Ensure that the application runs smoothly across different platforms.", done: false },
-  { id: 15, text: "Add VDOM to ShadowDOM", done: false },
-  { id: 16, text: "Module for remote, data cascading client update requests – Implement features for handling remote updates and data synchronization.", done: false }
-],
+    todoList: [
+      { id: 1, text: "cleanupEffects in lifecycle functionality", done: false },
+      { id: 2, text: "Error Handling functionality", done: false },
+      { id: 3, text: "data-model functionality", done: false },
+      { id: 4, text: "data-on:mouseMove functionality", done: false },
+      { id: 5, text: "data-on:keypress functionality", done: false },
+      { id: 6, text: "Add error modal and handling", done: false },
+      { id: 7, text: "Implement input sanitization", done: false },
+      { id: 8, text: "Implement Integrated XSS Protection", done: false },
+      { id: 9, text: "Implement CSP (Content Security Policy)", done: false },
+      { id: 10, text: "Cross-platform native support", done: false },
+      { id: 11, text: "Add VDOM to ShadowDOM", done: false },
+      { id: 12, text: "Module for remote, data cascading client update requests", done: false }
+    ],
     newTodo: ""
   }),
   methods: {
-      onMount(){
-          this.isMounted ? console.log("mounted") : console.log("not mounted");
+    onMount() {
+      this.isMounted ? console.log("mounted") : console.log("not mounted");
+    },
+      onUpdate(){
+          this.render();
       },
-    addTodo(event) {
-      if (event) event.preventDefault();
-      const newTodoText = this.state.newTodo.trim();
-    console.log(`new item : ${newTodoText}`);
-        let item = document.getElementById('inputTodo');
-        this.state.newTodo= item;
-    console.log(`new item : ${this.state.newTodo}`);
-      if (newTodoText) {
-        this.state.todoList.push({ 
-          id: this.state.todoList.length + 1, 
-          text: newTodoText, 
-          done: false 
-        });
-        this.state.newTodo = "";
-        this.update();
+addTodo(event) {
+    event.preventDefault();
+    try {
+        const form = event.target;
+        const inputField = form.querySelector('input[id="inputTodo"]');
+        const newTodoText = inputField.value.trim();
+        console.log(`new item : ${newTodoText}`);
+        if (newTodoText) {
+            this.state.todoList.push({
+                id: this.state.todoList.length + 1,
+                text: newTodoText,
+                done: false
+            });
+            console.log(this.state.todoList);
+            this.state.newTodo = "";
+            inputField.value = "";
+            this.render();
+            
+        } else {
+            console.log(`input element value : ${newTodoText}`);
+            console.error("Input element is empty or not found.");
+        }
+    } catch (e) {
+        console.error(e);
+    }
+},
+toggleTodo(event) {
+  const id = event.target.dataset.id;
+  if (id) {
+    const todo = this.state.todoList.find(item => item.id === parseInt(id, 10));
+    if (todo) {
+      todo.done = !todo.done;
+      this.render();
+    } else {
+      console.error(`Item with ID ${id} not found in todoList`);
+    }
+  } else {
+    console.error('ID is undefined');
+  }
+},
+ deleteTodo(event) {
+      const id = event.target.dataset.id;
+      if (id) {
+        const index = this.state.todoList.findIndex(item => item.id === parseInt(id, 10));
+        if (index !== -1) {
+          this.state.todoList.splice(index, 1);
+          console.log(`Deleted item with ID ${id}`);
+          this.render();
+        } else {
+          console.error(`Item with ID ${id} not found in todoList`);
+        }
       } else {
-          console.log(`input element value : ${newTodoText}`);
-        console.error("Input element is empty or not found.");
+        console.error('ID is undefined');
       }
     },
-    toggleTodo(index) {
-      if (this.state.todoList && this.state.todoList[index]) {
-        this.state.todoList[index].done = !this.state.todoList[index].done;
-        this.update();
-      }
+    showAllTodos() {
+      this.state.filter = 'all';
+      this.render();
     },
-    deleteTodo(index) {
-      if (this.state.todoList && this.state.todoList[index]) {
-        this.state.todoList.splice(index, 1);
-        this.update(); 
-      }
+    showActiveTodos() {
+      this.state.filter = 'active';
+      this.render();
+    },
+    showCompletedTodos() {
+      this.state.filter = 'completed';
+      this.render();
     },
     handleInputChange(event) {
-      // Update newTodo with the input's value
+      console.log('Input change event:', event);
+      this.state.newTodo = event.target.value;
+    },
+handleInputChange(event) {
+      console.log('Input change event:', event);
       this.state.newTodo = event.target.value;
     }
   },
@@ -103,16 +145,14 @@ todoList: [
       <h2>To-Do List</h2>
       <div class="input-container">
         <form data-on:submit="addTodo">
-          <input id="inputTodo" type="text" data-model="{{ newTodo }}" data-on:input="handleInputChange" placeholder="Add a new task"/>
+          <input id="inputTodo" type="text"  placeholder="Add a new task"/>
           <button type="submit">Add</button>
         </form>
       </div>
       <ul class="todo-list">
-        <li class="todo-item" data-for="(todo, index) in todoList" :key="todo.id">
-          {{ todo.id }}. 
-    <input type="checkbox" data-if="{{ todo.done }}" checked data-on:change="() => toggleTodo(index)" /> 
-        <input type="checkbox" data-else data-on:change="() => toggleTodo(index)" /> 
-
+    <li class="todo-item" data-for="(todo, index) in todoList" :key="todo.id">
+    {{ todo.id  }}.       <input type="checkbox" data-id="{{ todo.id }}" data-if="{{ todo.done }}" checked data-on:click="toggleTodo" /> 
+          <input type="checkbox" data-id="{{ todo.id }}"  data-else data-on:click="toggleTodo" /> 
           <span :class="{ 'done': todo.done }">{{ todo.text }}</span>
           <button data-on:click="() => deleteTodo(index)" class="delete-button">Delete</button>
         </li>
@@ -120,8 +160,8 @@ todoList: [
     </div>
   `,
   styles: `
-    form{
-        width:100%;
+    form {
+        width: 100%;
     }
     .todo-container {
       max-width: 400px;
@@ -192,11 +232,6 @@ Vis.Component.createComponent({
   }),
   methods: {
     handleStartClick() {
-        this.isMounted ? console.log("component is mounted") : console.log("not mounted");
-        
-        this.isUpdated ? console.log("component is updated") : console.log("not updated");
-                this.isDestroyed ? console.log("component is destroyed") : console.log("not destroyed");
-
       alert('Button clicked!');
     },
     toggleAlert() {
