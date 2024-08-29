@@ -1,60 +1,20 @@
 import {Vis} from "./Vis.js";
 
 Vis.Component.createComponent({
-  name: 'counter-component',
-  data: () => ({
-    counterState: 0,
-  }),
-  methods: {
-    increment() {
-      this.state.counterState++;
-      this.render();
-    }
-  },
-  template: `
-<div class="button-container">
-  <button class="button" data-on:click="increment">Count: {{ counterState }}</button>
-</div>
-  `,
-  styles: `
-.button-container {
-  display: flex;
-  justify-content: center; /* Horizontal alignment */
-}
-.button {
-  padding: 15px 30px;
-  border: 2px solid royalblue;
-  border-radius: 5px;
-  background-color: royalblue;
-  color: white;
-  font-size: 20px;
-  cursor: pointer;
-  display: block; /* Ensure the button behaves as a block element */
-  margin: 30px; /* Adjust margin if needed */
-  transition: background-color 0.3s ease, border 0.3s ease, color 0.3s ease;
-}
-.button:hover {
-  background-color: darkblue;
-}
-  `
-});
-Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
     todoList: [
-      { id: 1, text: "Add error modal and handling", done: false },
-      { id: 2, text: "Implement input sanitization", done: false },
-      { id: 3, text: "Implement Integrated XSS Protection", done: false },
-      { id: 4, text: "Implement CSP (Content Security Policy)", done: false },
-      { id: 5, text: "Implement combined VDOM and ShadowDOM", done:false },
-      { id: 6, text: "Cross-platform native support", done: false },
-      { id: 7, text: "Module for remote, data cascading client update requests", done: false }
+      { id: 1, text: "Implement input sanitization", done: false },
+      { id: 2, text: "Implement Integrated XSS Protection", done: false },
+      { id: 3, text: "Implement CSP (Content Security Policy)", done: false },
+      { id: 4, text: "Implement combined VDOM and ShadowDOM", done:false },
+      { id: 5, text: "Cross-platform native support", done: false },
+      { id: 6, text: "Module for remote, data cascading client update requests", done: false }
     ],
     newTodo: ""
   }),
   methods: {
     onMount() {
-      this.isMounted ? console.log("mounted") : console.log("not mounted");
     },
       onUpdate(){
           this.render();
@@ -65,7 +25,6 @@ addTodo(event) {
         const form = event.target;
         const inputField = form.querySelector('input[id="inputTodo"]');
         const newTodoText = inputField.value.trim();
-        console.log(`new item : ${newTodoText}`);
         if (newTodoText) {
             this.state.todoList.push({
                 id: this.state.todoList.length + 1,
@@ -78,7 +37,6 @@ addTodo(event) {
             this.render();
             
         } else {
-            console.log(`input element value : ${newTodoText}`);
             console.error("Input element is empty or not found.");
         }
     } catch (e) {
@@ -224,6 +182,7 @@ Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
     showAlert: true,
+      projectName: ''
   }),
   methods: {
     handleStartClick() {
@@ -237,15 +196,14 @@ Vis.Component.createComponent({
         additionalContent.style.display = 'none';
       }
     },
-    showDetails() {
-      alert('Details shown!');
-    }
+      onMount(){
+      },
   },
   template: `
     <div class="container">
       <div class="logo">
        
-    <svg width="500" height="500" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <svg width="700" height="700" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <style>
             .background { fill: white; opacity: 0.2; }
             .icon { fill: royalblue; }
@@ -256,14 +214,8 @@ Vis.Component.createComponent({
           <path class="accent" d="M25 25 L50 50 L75 25 Z" />
         </svg>
       </div>
-      <div class="title">Welcome to Your Vis.js App</div>
+      <div class="title">Welcome to Your VisJS App</div>
       <div class="description">Edit <code> src/app.js </code> to start</div>
-      <div class="btn-group my-2">
-        <button class="button" data-on:click="handleStartClick">Get Started</button>
-        <button class="button" data-on:click="handleStartClick">Read the Docs</button>
-        <button class="button" data-on:click="handleStartClick">Ecosystem</button>
-        <button class="button" data-on:click="handleStartClick">Examples</button>
-      </div>
       <counter-component></counter-component>
       </div>
     <todo-list></todo-list>
@@ -383,19 +335,21 @@ Vis.Component.createComponent({
               VisJS
             </a>
           </div>
-          <ul class="navbar-menu">
-            <li><a href="/" @click="navigate($event, '/')">Home</a></li>
-            <li><a href="/about" @click="navigate($event, '/about')">About</a></li>
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle">Services</a>
-              <ul class="dropdown-menu">
-                <li><a href="/service1" >Service 1</a></li>
-                <li><a href="/service2" >Service 2</a></li>
-                <li><a href="/service3" >Service 3</a></li>
-              </ul>
-            </li>
-            <li><a href="/contact">Contact</a></li>
-          </ul>
+<ul class="navbar-menu">
+  <li><a href="/docs/guide" data-on:click="navigate($event, '/docs')">Docs</a></li>
+  <li><a href="/ecosystem" data-on:click="navigate($event, '/ecosystem')">Ecosystem</a></li>
+  <li class="dropdown">
+    <a href="#" data-on:click="toggleDropdown($event)" class="dropdown-toggle">Community</a>
+    <ul class="dropdown-menu">
+      <li><a href="/forum">Forum</a></li>
+      <li><a href="/chat">Chat</a></li>
+      <li><a href="/meetups">Meetups</a></li>
+    </ul>
+  </li>
+  <li><a href="/showcase" data-on:click="navigate($event, '/showcase')">Examples</a></li>
+    <li><a href="/showcase" data-on:click="navigate($event, '/github')">Github</a></li>
+
+</ul>
           <button id="navbar-menu" class="navbar-toggle" @click="toggleNavbar">☰</button>
         </div>
       </nav>

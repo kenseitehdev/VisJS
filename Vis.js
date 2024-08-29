@@ -27,12 +27,6 @@ class manageState {
   }
 }
 const state = new manageState();
-const createApp = (location, components) => {
-  const appRoot = document.getElementById(location);
-  if (!appRoot) return showError({ location: "createApp", message: `Element with ID "${location}" not found` });
-  components.forEach(({ name }) => appRoot.appendChild(document.createElement(name)));
-  return appRoot;
-};
 class CustomComponent extends HTMLElement {
   static observedAttributes = ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'];
 constructor() {
@@ -123,26 +117,34 @@ rocessDataFor(el) {
 }
 function createComponent(config) {
   const { name, data, template, methods = {}, styles = "", onMount, onUpdate, onDestroy } = config;
-  class Component extends CustomComponent {
+  class Component extends HTMLElement {
     constructor() {
       super();
-      this.prevState = { ...this.state };
+      this.attachShadow({ mode: 'open' });
+        this.prevState = { ...this.state }; 
       this.state = typeof data === 'function' ? data() : { ...data };
+      this.methods=methods;
+      this.lifecycle = {
+        isMounted: false,
+        isUpdated: false,
+        isDestroyed: false,
+        mount: () => { this.lifecycle.isMounted = true; this.methods.onMount?.call(this); },
+update: () => { 
+          const hasChanges = this.hasStateChanged();
+          this.lifecycle.isUpdated = hasChanges; // Set isUpdated based on changes
+          if (hasChanges) {
+            this.methods.onUpdate;
+          }
+        },
+        destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
+      };
       Object.entries(methods).forEach(([key, method]) => {
         if (typeof method === 'function') this[key] = method.bind(this);
         else console.warn(`Method ${key} is not a function and cannot be bound.`);
       });
-      this.lifecycle = {
-        mount: () => { this.lifecycle.isMounted = true; onMount?.call(this); },
-        update: () => { if (this.hasStateChanged()) { this.lifecycle.isUpdated = true; onUpdate?.call(this); } },
-        destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
-        isMounted: false,
-        isUpdated: false,
-        isDestroyed: false
-      };
       this.render();
     }
-    hasStateChanged() {
+        hasStateChanged() {
       return Object.keys(this.state).some(key => this.state[key] !== this.prevState[key]);
     }
     setState(newState) {
@@ -176,7 +178,6 @@ bindEvents(){}
       `;
       this.attachEventListeners();
       this.attachNestedComponents();
-      this.processDirectives(this.shadowRoot, this.state);  
       this.lifecycle.update();
     }
     parseTemplate(template, state) {
@@ -298,15 +299,127 @@ bindEvents(){}
   }
   customElements.define(name, Component);
 }
-const use = (plugin, options = {}) => {
-    if(installedPlugins.includes(plugin)) {
-      console.warn('Plugin is already installed');
-      return;
+const defineErrorModal = () => {
+  customElements.define('error-modal', class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `
+<style>
+  :host {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Add a semi-transparent background */
+    justify-content: center;
+    align-items: center;
+  }
+  .modal {
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+    padding: 1em;
+    border-radius: 4px;
+    text-align: center;
+    max-width: 800px;
+    min-height: 325px;
+    width: 100%;
+    border-top: red 10px solid;
+  }
+  .modal p {
+    color: #333; /* Dark color for better readability */
+    font-size: 16px; /* Adjust font size as needed */
+    margin: 0;
+    padding: 0;
+    line-height: 1.5; /* Increased line height for readability */
+  }
+  .modal button {
+    line-height: 1; /* Adjusted for better button appearance */
+    font-size: 25pt;
+    font-family: Tahoma, sans-serif;
+    position: absolute;
+    top: 10px; /* Adjusted for better positioning */
+    right: 10px;
+    color: red;
+    border: none;
+    background: none;
+    cursor: pointer; /* Added pointer cursor for better UX */
+  }
+</style>
+        <div class="modal">
+          <p id="message"></p>
+          <button id="close">&times;</button>
+        </div>
+      `;
+      this.shadowRoot.querySelector('#close').addEventListener('click', () => this.close());
     }
-    (typeof plugin.install === 'function') ? plugin.install(Vis, options) : console.warn('Plugin does not have an install method');
-    installedPlugins.push(plugin);
+    open() {
+      this.style.display = 'flex';
+    }
+    close() {
+      this.style.display = 'none';
+    }
+    set message(value) {
+      this.shadowRoot.querySelector('#message').textContent = value;
+    }
+  });
+};
+const showError = ({ location, message }) => {
+  console.error(`Error in ${location}: ${message}`);
+  showModal(`Error: ${message}`);
+};
+const showModal = (message) => {
+  let modal = document.querySelector('error-modal');
+  if (!modal) {
+    modal = document.createElement('error-modal');
+    document.body.appendChild(modal);
+  }
+  modal.message = message;
+  modal.open();
+};
+const use = (plugin, options = {}) => {
+  if (installedPlugins.includes(plugin)) {
+    console.warn('Plugin is already installed');
+    return;
+  }
+  if (typeof plugin.install === 'function') {
+    try {
+      plugin.install(Vis, options);
+    } catch (error) {
+      showError({ location: 'use', message: error.message });
+    }
+  } else {
+    console.warn('Plugin does not have an install method');
+  }
+  installedPlugins.push(plugin);
+};
+const createApp = (location, components) => {
+  const appRoot = document.getElementById(location);
+  if (!appRoot) {
+    showError({ location: "createApp", message: `Element with ID "${location}" not found` });
+    return;
+  }
+  components.forEach(({ name }) => {
+    try {
+      appRoot.appendChild(document.createElement(name));
+    } catch (error) {
+      showError({ location: "createApp", message: `Failed to create component ${name}: ${error.message}` });
+    }
+  });
+  return appRoot;
+};
+ window.onerror = function(message, source, lineno, colno, error) {
+    let errorMsg = `Error: ${message}\nSource: ${source}\nLine: ${lineno}\nColumn: ${colno}`;
+    if (error && error.stack) {
+      errorMsg += `\nStack: ${error.stack}`;
+    }
+    showError(errorMsg);
+    return true;
   };
 const Component = { createComponent };
-const App = {createApp, use, state};
-const Vis = { App, Component};
+const App = { createApp, use, state };
+const Vis = { App, Component };
+defineErrorModal();
 export { Vis };
