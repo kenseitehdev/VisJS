@@ -4,13 +4,18 @@ Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
     todoList: [
-      { id: 1, text: "Implement input sanitization", done: false },
-      { id: 2, text: "Implement Integrated XSS Protection", done: false },
-      { id: 3, text: "Implement CSP (Content Security Policy)", done: false },
-      { id: 4, text: "Implement combined VDOM and ShadowDOM", done:false },
-      { id: 5, text: "Cross-platform native support", done: false },
-      { id: 6, text: "Module for remote, data cascading client update requests", done: false }
-    ],
+{ id: 1, text: "Implement input sanitization", done: false },
+{ id: 2, text: "Implement Integrated XSS Protection", done: false },
+{ id: 3, text: "Implement CSP (Content Security Policy)", done: false },
+{ id: 4, text: "Advanced state management", done: false },
+{ id: 5, text: "Implement combined VDOM and ShadowDOM", done: false },
+{ id: 6, text: "Module for remote, data cascading client update requests", done: false },
+{ id: 7, text: "Ecosystem Routing", done: false },
+{ id: 8, text: "Developed Error Management", done: false },
+{ id: 9, text: "Templating Engine", done: false },
+{ id: 10, text: "make more efficient and smaller", done: false },
+{ id: 11, text: "Cross-platform native support", done: false },],
+
     newTodo: ""
   }),
   methods: {
@@ -347,7 +352,7 @@ Vis.Component.createComponent({
     </ul>
   </li>
   <li><a href="/showcase" data-on:click="navigate($event, '/showcase')">Examples</a></li>
-    <li><a href="/showcase" data-on:click="navigate($event, '/github')">Github</a></li>
+    <li><a href="https://github.com/kenseitehdev/VisJS" data-on:click="navigate($event, '/github')">Github</a></li>
 
 </ul>
           <button id="navbar-menu" class="navbar-toggle" @click="toggleNavbar">☰</button>

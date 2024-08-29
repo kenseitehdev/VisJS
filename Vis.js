@@ -3,8 +3,7 @@ const defineCustomElement = (tagName, template) => {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' }).innerHTML = `<template>${template}</template>`.content.cloneNode(true);
-    }
-    connectedCallback() {
+    }connectedCallback() {
       bindStateAndEvents(this.shadowRoot);
     }
   });
@@ -15,14 +14,11 @@ class manageState {
   set(key, value) {
     this.#state[key] = value;
     this.#listeners.forEach(listener => listener(this.#state));
-  }
-  get(key) {
+  }get(key) {
     return this.#state[key];
-  }
-  subscribe(listener) {
+  }subscribe(listener) {
     this.#listeners.add(listener);
-  }
-  unsubscribe(listener) {
+  }unsubscribe(listener) {
     this.#listeners.delete(listener);
   }
 }
@@ -34,35 +30,29 @@ constructor() {
     this.attachShadow({ mode: 'open' });
     this.state = {};
     this.eventListeners = [];
-  }
-  connectedCallback() {
+  }connectedCallback() {
     this.render();
     this.bindEvents();
     this.lifecycle?.mount?.();
-  }
-  disconnectedCallback() {
+  }disconnectedCallback() {
     this.lifecycle?.destroy?.();
     this.cleanupEffects();
     this.removeEventListeners();
-  }
-  removeEventListeners() {
+  }removeEventListeners() {
     this.eventListeners.forEach(({ event, handler }) => this.removeEventListener(event, handler));
     this.eventListeners = [];
-  }
-render() {
+  }render() {
     this.shadowRoot.innerHTML = `
       <style>${this.styles}</style>
       ${this.template}
     `;
     this.applyDirectives();
-  }
-applyDirectives() {
+  }applyDirectives() {
     const root = this.shadowRoot;
     ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'].forEach(attr => {
       root.querySelectorAll(`[${attr}]`).forEach(el => this[`process${attr.replace(/[^a-zA-Z]/g, '')}`]?.(el));
     });
-  }
-rocessDataFor(el) {
+  }processDataFor(el) {
     const [itemPart, listName] = el.getAttribute('data-for').split(' in ').map(str => str.trim());
     const [item, index] = itemPart.includes(',') ? itemPart.split(',').map(str => str.trim()) : [itemPart, null];
     const items = this.state[listName] || [];
@@ -80,36 +70,29 @@ rocessDataFor(el) {
   }
   processDataIf(el) {
     el.style.display = this.evaluateCondition(el.getAttribute('data-if')) ? 'block' : 'none';
-  }
-  processDataElse(el) {
+  }processDataElse(el) {
     const prevEl = el.previousElementSibling;
     if (prevEl && prevEl.hasAttribute('data-if')) {
       el.style.display = !this.evaluateCondition(prevEl.getAttribute('data-if')) ? 'block' : 'none';
     }
-  }
-  processDataBind(el) {
+  }processDataBind(el) {
     const [attr, bind] = el.getAttribute('data-bind').split(':').map(s => s.trim());
     el.setAttribute(attr, this.state[bind]);
-  }
-  processDataOnClick(el) {
+  }processDataOnClick(el) {
     const handler = el.getAttribute('data-on:click');
     if (this[handler] instanceof Function) el.addEventListener('click', this[handler].bind(this));
-  }
-  replacePlaceholders(template, scope) {
+  }replacePlaceholders(template, scope) {
     return template.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => this.getNestedValue(key, scope) ?? match);
-  }
-  evaluateCondition(condition) {
+  }evaluateCondition(condition) {
     try {
       const cleanedCondition = condition.replace(/{{|}}/g, '').trim();
       return new Function('scope', `with (scope) { return ${cleanedCondition}; }`)(this.state);
     } catch {
       return false;
     }
-  }
-  getNestedValue(key, scope) {
+  }getNestedValue(key, scope) {
     return key.split('.').reduce((acc, part) => acc?.[part], scope);
-  }
-  bindEvents() {}
+  }bindEvents() {}
   cleanupEffects() {
     this.effects?.forEach(effect => effect.cleanup?.());
     this.effects = [];
@@ -143,62 +126,47 @@ update: () => {
         else console.warn(`Method ${key} is not a function and cannot be bound.`);
       });
       this.render();
-    }
-        hasStateChanged() {
+    }hasStateChanged() {
       return Object.keys(this.state).some(key => this.state[key] !== this.prevState[key]);
-    }
-    setState(newState) {
+    }setState(newState) {
       this.prevState = { ...this.state };
-      this.state = { ...this.state, ...newState };       this.render();
-    }
-      resetUpdateFlag() {
+      this.state = { ...this.state, ...newState };       
+        this.render();
+    }resetUpdateFlag() {
     setTimeout(() => {
       this.lifecycle.isUpdated = false;
     }, 0);
-  }
-bindEvents(){}
+  }bindEvents(){}
     connectedCallback() {
       this.render();
       this.isMounted=true;
     this.lifecycle.mount();
       this.bindEvents();
-    }
-    disconnectedCallback() {
+    }disconnectedCallback() {
       this.lifecycle.destroy();
       this.removeEventListeners();
-    }
-    removeEventListeners() {
+    }removeEventListeners() {
       this.eventListeners?.forEach(({ event, handler }) => this.removeEventListener(event, handler));
       this.eventListeners = [];
-    }
-    render() {
-      this.shadowRoot.innerHTML = `
-        <style>${styles}</style>
-        ${this.parseTemplate(template, this.state)}
-      `;
+    }render() {
+      this.shadowRoot.innerHTML = `<style>${styles}</style>${this.parseTemplate(template, this.state)}`;
       this.attachEventListeners();
       this.attachNestedComponents();
       this.lifecycle.update();
-    }
-    parseTemplate(template, state) {
+    }parseTemplate(template, state) {
       const container = document.createElement('div');
       container.innerHTML = template.trim().replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => {
         return this.getNestedValue(key, state) ?? match;
       });
       this.processDirectives(container, state);
       return container.innerHTML;
-    }
-    processDirectives(container, state) {
+    }processDirectives(container, state) {
       container.querySelectorAll('[data-for]').forEach(el => this.processVFor(el, state));
       container.querySelectorAll('[data-if], [data-elif], [data-else]').forEach(el => this.processVIfElse(el, state));
       container.querySelectorAll('[data-model]').forEach(el => this.processDataModel(el));
-    }
-    onMount() {
-      }
-      onUpdate() {
-      }
-      onDestroy() {
-      }
+    }onMount() {}
+      onUpdate() {}
+      onDestroy() {}
     processDataModel(el) {
       const model = el.getAttribute('data-model');
       if (model in this.state) {
@@ -231,22 +199,18 @@ bindEvents(){}
         fragment.appendChild(itemElement);
       });
       el.replaceWith(fragment);
-    }
-    processVIfElse(el, state) {
+    }processVIfElse(el, state) {
       const condition = el.getAttribute('data-if') || el.getAttribute('data-elif') || el.getAttribute('data-else');
       const prevEl = el.previousElementSibling;
       const prevConditionMet = prevEl && (prevEl.hasAttribute('data-if') || prevEl.hasAttribute('data-elif'));
       const shouldRender = condition ? this.evaluateCondition(condition, state) : !prevConditionMet;
       if (!shouldRender) el.remove();
       else el.removeAttribute(condition.startsWith('data-if') ? 'data-if' : condition.startsWith('data-elif') ? 'data-elif' : 'data-else');
-    }
-    getNestedValue(key, scope) {
+    }getNestedValue(key, scope) {
       return key.split('.').reduce((acc, part) => acc?.[part], scope);
-    }
-    replacePlaceholders(template, scope) {
+    }replacePlaceholders(template, scope) {
       return template.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => this.getNestedValue(key, scope) ?? match);
-    }
-    evaluateCondition(condition, scope) {
+    }evaluateCondition(condition, scope) {
       try {
         const cleanedCondition = condition.replace(/{{|}}/g, '').trim();
         return new Function('scope', `with (scope) { return ${cleanedCondition}; }`)(scope);
@@ -254,8 +218,7 @@ bindEvents(){}
         console.error('Error evaluating condition:', error);
         return false;
       }
-    }
-    attachEventListeners() {
+    }attachEventListeners() {
       this.shadowRoot.querySelectorAll('[data-on\\:click]').forEach(el => {
         const handler = el.getAttribute('data-on:click');
         if (this[handler] instanceof Function) el.addEventListener('click', this[handler].bind(this));
@@ -284,8 +247,7 @@ bindEvents(){}
         const handler = el.getAttribute('data-on:submit');
         if (this[handler] instanceof Function) el.addEventListener('submit', this[handler].bind(this));
       });
-    }
-    attachNestedComponents() {
+    }attachNestedComponents() {
       this.shadowRoot.querySelectorAll('[data-component]').forEach(el => {
         const componentName = el.getAttribute('data-component');
         const ComponentClass = customElements.get(componentName);
@@ -298,8 +260,7 @@ bindEvents(){}
     }
   }
   customElements.define(name, Component);
-}
-const defineErrorModal = () => {
+}const defineErrorModal = () => {
   customElements.define('error-modal', class extends HTMLElement {
     constructor() {
       super();
@@ -313,13 +274,13 @@ const defineErrorModal = () => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Add a semi-transparent background */
+    background: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
   }
   .modal {
     position: relative;
-    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+    background-color: rgba(255, 255, 255, 0.7);
     padding: 1em;
     border-radius: 4px;
     text-align: center;
@@ -329,23 +290,23 @@ const defineErrorModal = () => {
     border-top: red 10px solid;
   }
   .modal p {
-    color: #333; /* Dark color for better readability */
-    font-size: 16px; /* Adjust font size as needed */
+    color: #333;
+    font-size: 16px;
     margin: 0;
     padding: 0;
-    line-height: 1.5; /* Increased line height for readability */
+    line-height: 1.5;
   }
   .modal button {
-    line-height: 1; /* Adjusted for better button appearance */
+    line-height: 1;
     font-size: 25pt;
     font-family: Tahoma, sans-serif;
     position: absolute;
-    top: 10px; /* Adjusted for better positioning */
+    top: 10px;
     right: 10px;
     color: red;
     border: none;
     background: none;
-    cursor: pointer; /* Added pointer cursor for better UX */
+    cursor: pointer;
   }
 </style>
         <div class="modal">
@@ -365,8 +326,7 @@ const defineErrorModal = () => {
       this.shadowRoot.querySelector('#message').textContent = value;
     }
   });
-};
-const showError = ({ location, message }) => {
+};const showError = ({ location, message }) => {
   console.error(`Error in ${location}: ${message}`);
   showModal(`Error: ${message}`);
 };
@@ -378,8 +338,7 @@ const showModal = (message) => {
   }
   modal.message = message;
   modal.open();
-};
-const use = (plugin, options = {}) => {
+};const use = (plugin, options = {}) => {
   if (installedPlugins.includes(plugin)) {
     console.warn('Plugin is already installed');
     return;
@@ -394,14 +353,13 @@ const use = (plugin, options = {}) => {
     console.warn('Plugin does not have an install method');
   }
   installedPlugins.push(plugin);
-};
-const createApp = (location, components) => {
+};const createApp = (location, components) => {
   const appRoot = document.getElementById(location);
   if (!appRoot) {
-    showError({ location: "createApp", message: `Element with ID "${location}" not found` });
+    showError({ location: "createApp", message: `Element with ID "${location}" not found` }
+);
     return;
-  }
-  components.forEach(({ name }) => {
+  }components.forEach(({ name }) => {
     try {
       appRoot.appendChild(document.createElement(name));
     } catch (error) {
@@ -409,17 +367,28 @@ const createApp = (location, components) => {
     }
   });
   return appRoot;
-};
- window.onerror = function(message, source, lineno, colno, error) {
+};window.onerror = function(message, source, lineno, colno, error) {
     let errorMsg = `Error: ${message}\nSource: ${source}\nLine: ${lineno}\nColumn: ${colno}`;
     if (error && error.stack) {
       errorMsg += `\nStack: ${error.stack}`;
     }
     showError(errorMsg);
     return true;
-  };
+  };defineErrorModal();
+function Sanitize() {
+}function XSS() {
+}function CSP() {
+}class Router {
+    constructor() {
+        this.statusCode = null;
+        this.res = null;
+        this.routes = {};
+    }
+    navigate() {
+    }
+}
+const Security = { Sanitize, XSS, CSP };
 const Component = { createComponent };
 const App = { createApp, use, state };
-const Vis = { App, Component };
-defineErrorModal();
+const Vis = { App, Component, Security, Router };
 export { Vis };
