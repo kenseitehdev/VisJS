@@ -107,6 +107,7 @@ function createComponent(config) {
         this.prevState = { ...this.state }; 
       this.state = typeof data === 'function' ? data() : { ...data };
       this.methods=methods;
+        this.template = sanitize(this.template);
       this.lifecycle = {
         isMounted: false,
         isUpdated: false,
@@ -353,7 +354,8 @@ const showModal = (message) => {
     console.warn('Plugin does not have an install method');
   }
   installedPlugins.push(plugin);
-};const createApp = (location, components) => {
+};
+const createApp = (location, components) => { 
   const appRoot = document.getElementById(location);
   if (!appRoot) {
     showError({ location: "createApp", message: `Element with ID "${location}" not found` }
@@ -367,7 +369,8 @@ const showModal = (message) => {
     }
   });
   return appRoot;
-};window.onerror = function(message, source, lineno, colno, error) {
+};
+window.onerror = function(message, source, lineno, colno, error) {
     let errorMsg = `Error: ${message}\nSource: ${source}\nLine: ${lineno}\nColumn: ${colno}`;
     if (error && error.stack) {
       errorMsg += `\nStack: ${error.stack}`;
@@ -375,20 +378,13 @@ const showModal = (message) => {
     showError(errorMsg);
     return true;
   };defineErrorModal();
-function Sanitize() {
-}function XSS() {
-}function CSP() {
-}class Router {
-    constructor() {
-        this.statusCode = null;
-        this.res = null;
-        this.routes = {};
-    }
-    navigate() {
-    }
+function sanitize(input) {
+   const element = document.createElement('template');
+    element.innerText = input;
+    return element.innerHTML;  
 }
-const Security = { Sanitize, XSS, CSP };
+const Security = { sanitize,};
 const Component = { createComponent };
 const App = { createApp, use, state };
-const Vis = { App, Component, Security, Router };
+const Vis = { App, Component, Security };
 export { Vis };

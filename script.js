@@ -4,17 +4,14 @@ Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
     todoList: [
-{ id: 1, text: "Implement input sanitization", done: false },
-{ id: 2, text: "Implement Integrated XSS Protection", done: false },
-{ id: 3, text: "Implement CSP (Content Security Policy)", done: false },
-{ id: 4, text: "Advanced state management", done: false },
-{ id: 5, text: "Implement combined VDOM and ShadowDOM", done: false },
-{ id: 6, text: "Module for remote, data cascading client update requests", done: false },
-{ id: 7, text: "Ecosystem Routing", done: false },
-{ id: 8, text: "Developed Error Management", done: false },
-{ id: 9, text: "Templating Engine", done: false },
-{ id: 10, text: "make more efficient and smaller", done: false },
-{ id: 11, text: "Cross-platform native support", done: false },],
+{ id: 1, text: "Implement combined VDOM and ShadowDOM", done: false },
+{ id: 2, text: "Developed Error Management", done: false },
+{ id: 3, text: "Templating Engine", done: false },
+{ id: 4, text: "make more efficient and smaller", done: false },
+{ id: 5, text: "Ecosystem Routing", done: false },
+{ id: 6, text: "Ecosystem Advanced State management", done: false },
+{ id: 7, text: "Ecosystem Module for remote, data cascading client update requests", done: false },
+{ id: 10, text: "Ecosystem Cross-platform native support", done: false },],
 
     newTodo: ""
   }),
