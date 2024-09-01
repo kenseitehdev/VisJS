@@ -23,6 +23,33 @@ class manageState {
   }
 }
 const state = new manageState();
+function getCdnLinks() {
+  const cdnLinks = {
+    stylesheets: Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(link => link.href),
+    scripts: Array.from(document.querySelectorAll('script[src]')).map(script => script.src)
+  };
+  return cdnLinks;
+}
+function loadStylesheets(shadowRoot, stylesheets) {
+  stylesheets.forEach(href => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    shadowRoot.appendChild(link);
+  });
+}
+function loadScripts(shadowRoot, scripts) {
+  scripts.forEach(src => {
+    if (!loadedResources.scripts.has(src)) {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => console.log(`Script ${src} loaded.`);
+      script.onerror = (error) => console.error(`Failed to load script ${src}.`, error);
+      shadowRoot.appendChild(script);
+      loadedResources.scripts.add(src);
+    }
+  });
+}
 class CustomComponent extends HTMLElement {
   static observedAttributes = ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'];
 constructor() {
@@ -104,7 +131,8 @@ function createComponent(config) {
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
-        this.prevState = { ...this.state }; 
+        this.prevState = { ...this.state };
+        this.styles=styles;
       this.state = typeof data === 'function' ? data() : { ...data };
       this.methods=methods;
         this.template = sanitize(this.template);
@@ -115,16 +143,13 @@ function createComponent(config) {
         mount: () => { this.lifecycle.isMounted = true; this.methods.onMount?.call(this); },
 update: () => { 
           const hasChanges = this.hasStateChanged();
-          this.lifecycle.isUpdated = hasChanges; // Set isUpdated based on changes
-          if (hasChanges) {
-            this.methods.onUpdate;
-          }
+          this.lifecycle.isUpdated = hasChanges;
+          hasChanges ? this.methods.onUpdate : "";
         },
         destroy: () => { this.lifecycle.isDestroyed = true; onDestroy?.call(this); },
       };
       Object.entries(methods).forEach(([key, method]) => {
-        if (typeof method === 'function') this[key] = method.bind(this);
-        else console.warn(`Method ${key} is not a function and cannot be bound.`);
+        (typeof method === 'function') ? this[key] = method.bind(this) : console.warn(`Method ${key} is not a function and cannot be bound.`);
       });
       this.render();
     }hasStateChanged() {
@@ -149,8 +174,27 @@ update: () => {
     }removeEventListeners() {
       this.eventListeners?.forEach(({ event, handler }) => this.removeEventListener(event, handler));
       this.eventListeners = [];
-    }render() {
-      this.shadowRoot.innerHTML = `<style>${styles}</style>${this.parseTemplate(template, this.state)}`;
+    }
+     getGlobalStyles = () => {
+  const styleSheets = Array.from(document.styleSheets);
+  let globalStyles = '';
+
+  styleSheets.forEach(sheet => {
+    try {
+      Array.from(sheet.cssRules).forEach(rule => {
+        globalStyles += rule.cssText;
+      });
+    } catch (e) {
+      console.warn('Unable to read stylesheet:', e);
+    }
+  });
+  return globalStyles;
+}
+render() {
+        const style = document.createElement('style');
+    style.textContent = this.getGlobalStyles();
+    this.shadowRoot.appendChild(style);
+      this.shadowRoot.innerHTML= `<style>${this.styles}</style>${this.parseTemplate(template, this.state)}`;
       this.attachEventListeners();
       this.attachNestedComponents();
       this.lifecycle.update();
@@ -182,17 +226,12 @@ update: () => {
       const vForAttr = el.getAttribute('data-for');
       if (!vForAttr) return;
       const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
-      const [item, index] = itemPart.includes(',')
-        ? itemPart.replace(/[()]/g, '').split(',').map(str => str.trim())
-        : [itemPart, null];
+      const [item, index] = itemPart.includes(',') ? itemPart.replace(/[()]/g, '').split(',').map(str => str.trim()) : [itemPart, null];
       const items = state[listName] || [];
       const fragment = document.createDocumentFragment();
       const templateContent = el.cloneNode(true);
       templateContent.removeAttribute('data-for');
-      (Array.isArray(items)
-        ? items.map((value, idx) => ({ value, index: idx }))
-        : Object.entries(items).map(([key, value]) => ({ key, value }))
-      ).forEach(({ value, index, key }) => {
+      (Array.isArray(items) ? items.map((value, idx) => ({ value, index: idx })) : Object.entries(items).map(([key, value]) => ({ key, value }))).forEach(({ value, index, key }) => {
         const itemScope = { ...state, [item]: value, ...(index !== undefined ? { [index]: index } : {}), ...(key !== undefined ? { [`${item}Key`]: key } : {}) };
         const itemElement = templateContent.cloneNode(true);
         itemElement.innerHTML = this.replacePlaceholders(itemElement.innerHTML, itemScope).trim();
@@ -219,36 +258,27 @@ update: () => {
         console.error('Error evaluating condition:', error);
         return false;
       }
-    }attachEventListeners() {
-      this.shadowRoot.querySelectorAll('[data-on\\:click]').forEach(el => {
-        const handler = el.getAttribute('data-on:click');
-        if (this[handler] instanceof Function) el.addEventListener('click', this[handler].bind(this));
-      });
-      this.shadowRoot.querySelectorAll('[data-on\\:hover]').forEach(el => {
-        const handler = el.getAttribute('data-on:hover');
-        if (this[handler] instanceof Function) el.addEventListener('mouseover', this[handler].bind(this));
-      });
-      this.shadowRoot.querySelectorAll('[data-on\\:change]').forEach(el => {
-        const handler = el.getAttribute('data-on:change');
-        if (this[handler] instanceof Function) el.addEventListener('change', this[handler].bind(this));
-      });
-        this.shadowRoot.querySelectorAll('[data-on\\:mouseMove]').forEach(el => {
-    const handler = el.getAttribute('data-on:mouseMove');
-    if (this[handler] instanceof Function) el.addEventListener('mousemove', this[handler].bind(this));
-  });
-  this.shadowRoot.querySelectorAll('[data-on\\:keyPress]').forEach(el => {
-    const handler = el.getAttribute('data-on:keyPress');
-    if (this[handler] instanceof Function) el.addEventListener('keypress', this[handler].bind(this));
-  });
-  this.shadowRoot.querySelectorAll('[data-on\\:focus]').forEach(el => {
-    const handler = el.getAttribute('data-on:focus');
-    if (this[handler] instanceof Function) el.addEventListener('focus', this[handler].bind(this));
-  });
-      this.shadowRoot.querySelectorAll('[data-on\\:submit]').forEach(el => {
-        const handler = el.getAttribute('data-on:submit');
-        if (this[handler] instanceof Function) el.addEventListener('submit', this[handler].bind(this));
-      });
-    }attachNestedComponents() {
+    }
+attachEventListeners() {
+  const events = {
+    'data-on\\:click': 'click',
+    'data-on\\:hover': 'mouseover',
+    'data-on\\:change': 'change',
+    'data-on\\:mouseMove': 'mousemove',
+    'data-on\\:keyPress': 'keypress',
+    'data-on\\:focus': 'focus',
+    'data-on\\:submit': 'submit'
+  };
+  for (const [dataAttr, eventType] of Object.entries(events)) {
+    this.shadowRoot.querySelectorAll(`[${dataAttr}]`).forEach(el => {
+      const handler = el.getAttribute(dataAttr);
+      if (this[handler] instanceof Function) {
+        el.addEventListener(eventType, this[handler].bind(this));
+      }
+    });
+  }
+}
+      attachNestedComponents() {
       this.shadowRoot.querySelectorAll('[data-component]').forEach(el => {
         const componentName = el.getAttribute('data-component');
         const ComponentClass = customElements.get(componentName);
@@ -261,85 +291,8 @@ update: () => {
     }
   }
   customElements.define(name, Component);
-}const defineErrorModal = () => {
-  customElements.define('error-modal', class extends HTMLElement {
-    constructor() {
-      super();
-      this.attachShadow({ mode: 'open' });
-      this.shadowRoot.innerHTML = `
-<style>
-  :host {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-  }
-  .modal {
-    position: relative;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 1em;
-    border-radius: 4px;
-    text-align: center;
-    max-width: 800px;
-    min-height: 325px;
-    width: 100%;
-    border-top: red 10px solid;
-  }
-  .modal p {
-    color: #333;
-    font-size: 16px;
-    margin: 0;
-    padding: 0;
-    line-height: 1.5;
-  }
-  .modal button {
-    line-height: 1;
-    font-size: 25pt;
-    font-family: Tahoma, sans-serif;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: red;
-    border: none;
-    background: none;
-    cursor: pointer;
-  }
-</style>
-        <div class="modal">
-          <p id="message"></p>
-          <button id="close">&times;</button>
-        </div>
-      `;
-      this.shadowRoot.querySelector('#close').addEventListener('click', () => this.close());
-    }
-    open() {
-      this.style.display = 'flex';
-    }
-    close() {
-      this.style.display = 'none';
-    }
-    set message(value) {
-      this.shadowRoot.querySelector('#message').textContent = value;
-    }
-  });
-};const showError = ({ location, message }) => {
-  console.error(`Error in ${location}: ${message}`);
-  showModal(`Error: ${message}`);
-};
-const showModal = (message) => {
-  let modal = document.querySelector('error-modal');
-  if (!modal) {
-    modal = document.createElement('error-modal');
-    document.body.appendChild(modal);
-  }
-  modal.message = message;
-  modal.open();
-};const use = (plugin, options = {}) => {
+}
+const use = (plugin, options = {}) => {
   if (installedPlugins.includes(plugin)) {
     console.warn('Plugin is already installed');
     return;
@@ -358,8 +311,6 @@ const showModal = (message) => {
 const createApp = (location, components) => { 
   const appRoot = document.getElementById(location);
   if (!appRoot) {
-    showError({ location: "createApp", message: `Element with ID "${location}" not found` }
-);
     return;
   }components.forEach(({ name }) => {
     try {
@@ -370,14 +321,6 @@ const createApp = (location, components) => {
   });
   return appRoot;
 };
-window.onerror = function(message, source, lineno, colno, error) {
-    let errorMsg = `Error: ${message}\nSource: ${source}\nLine: ${lineno}\nColumn: ${colno}`;
-    if (error && error.stack) {
-      errorMsg += `\nStack: ${error.stack}`;
-    }
-    showError(errorMsg);
-    return true;
-  };defineErrorModal();
 function sanitize(input) {
    const element = document.createElement('template');
     element.innerText = input;

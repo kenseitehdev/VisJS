@@ -5,12 +5,10 @@ Vis.Component.createComponent({
   data: () => ({
     todoList: [
 { id: 1, text: "Implement combined VDOM and ShadowDOM", done: false },
-{ id: 2, text: "Developed Error Management", done: false },
-{ id: 3, text: "Templating Engine", done: false },
-{ id: 4, text: "make more efficient and smaller", done: false },
-{ id: 5, text: "Ecosystem Routing", done: false },
-{ id: 6, text: "Ecosystem Advanced State management", done: false },
-{ id: 7, text: "Ecosystem Module for remote, data cascading client update requests", done: false },
+{ id: 2, text: "Templating Engine", done: false },
+{ id: 3, text: "Ecosystem Routing", done: false },
+{ id: 4, text: "Ecosystem Advanced State management", done: false },
+{ id: 5, text: "Ecosystem Module for remote, data cascading client update requests", done: false },
 { id: 10, text: "Ecosystem Cross-platform native support", done: false },],
 
     newTodo: ""
@@ -97,7 +95,7 @@ handleInputChange(event) {
   },
   template: `
     <div class="todo-container">
-      <h2>To-Do List</h2>
+      <h2 class="text-lg" >To-Do List</h2>
       <div class="input-container">
         <form data-on:submit="addTodo">
           <input id="inputTodo" type="text"  placeholder="Add a new task"/>
@@ -174,6 +172,7 @@ handleInputChange(event) {
     .delete-button {
       margin-left: auto;
       background-color: #dc3545;
+        
     }
     .delete-button:hover {
       background-color: #c82333;
