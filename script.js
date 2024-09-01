@@ -4,7 +4,8 @@ Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
     todoList: [
-{ id: 1, text: "Implement combined VDOM and ShadowDOM", done: false },
+{ id: 1, text: "Fix reactivity", done: false },
+{ id: 2, text: "Implement combined VDOM and ShadowDOM", done: false },
 { id: 2, text: "Templating Engine", done: false },
 { id: 3, text: "Ecosystem Routing", done: false },
 { id: 4, text: "Ecosystem Advanced State management", done: false },
@@ -23,6 +24,7 @@ addTodo(event) {
     event.preventDefault();
     try {
         const form = event.target;
+        console.log(form);
         const inputField = form.querySelector('input[id="inputTodo"]');
         const newTodoText = inputField.value.trim();
         if (newTodoText) {
@@ -88,14 +90,10 @@ toggleTodo(event) {
       console.log('Input change event:', event);
       this.state.newTodo = event.target.value;
     },
-handleInputChange(event) {
-      console.log('Input change event:', event);
-      this.state.newTodo = event.target.value;
-    }
   },
   template: `
     <div class="todo-container">
-      <h2 class="text-lg" >To-Do List</h2>
+      <h2 >To-Do List</h2>
       <div class="input-container">
         <form data-on:submit="addTodo">
           <input id="inputTodo" type="text"  placeholder="Add a new task"/>
@@ -172,7 +170,6 @@ handleInputChange(event) {
     .delete-button {
       margin-left: auto;
       background-color: #dc3545;
-        
     }
     .delete-button:hover {
       background-color: #c82333;
@@ -217,7 +214,6 @@ Vis.Component.createComponent({
       </div>
       <div class="title">Welcome to Your VisJS App</div>
       <div class="description">Edit <code> src/app.js </code> to start</div>
-      <counter-component></counter-component>
       </div>
     <todo-list></todo-list>
     </div>

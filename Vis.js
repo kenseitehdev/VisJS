@@ -260,24 +260,35 @@ render() {
       }
     }
 attachEventListeners() {
-  const events = {
-    'data-on\\:click': 'click',
-    'data-on\\:hover': 'mouseover',
-    'data-on\\:change': 'change',
-    'data-on\\:mouseMove': 'mousemove',
-    'data-on\\:keyPress': 'keypress',
-    'data-on\\:focus': 'focus',
-    'data-on\\:submit': 'submit'
-  };
-  for (const [dataAttr, eventType] of Object.entries(events)) {
-    this.shadowRoot.querySelectorAll(`[${dataAttr}]`).forEach(el => {
-      const handler = el.getAttribute(dataAttr);
-      if (this[handler] instanceof Function) {
-        el.addEventListener(eventType, this[handler].bind(this));
-      }
-    });
-  }
-}
+      this.shadowRoot.querySelectorAll('[data-on\\:click]').forEach(el => {
+        const handler = el.getAttribute('data-on:click');
+        if (this[handler] instanceof Function) el.addEventListener('click', this[handler].bind(this));
+      });
+      this.shadowRoot.querySelectorAll('[data-on\\:hover]').forEach(el => {
+        const handler = el.getAttribute('data-on:hover');
+        if (this[handler] instanceof Function) el.addEventListener('mouseover', this[handler].bind(this));
+      });
+      this.shadowRoot.querySelectorAll('[data-on\\:change]').forEach(el => {
+        const handler = el.getAttribute('data-on:change');
+        if (this[handler] instanceof Function) el.addEventListener('change', this[handler].bind(this));
+      });
+        this.shadowRoot.querySelectorAll('[data-on\\:mouseMove]').forEach(el => {
+    const handler = el.getAttribute('data-on:mouseMove');
+    if (this[handler] instanceof Function) el.addEventListener('mousemove', this[handler].bind(this));
+  });
+  this.shadowRoot.querySelectorAll('[data-on\\:keyPress]').forEach(el => {
+    const handler = el.getAttribute('data-on:keyPress');
+    if (this[handler] instanceof Function) el.addEventListener('keypress', this[handler].bind(this));
+  });
+  this.shadowRoot.querySelectorAll('[data-on\\:focus]').forEach(el => {
+    const handler = el.getAttribute('data-on:focus');
+    if (this[handler] instanceof Function) el.addEventListener('focus', this[handler].bind(this));
+  });
+      this.shadowRoot.querySelectorAll('[data-on\\:submit]').forEach(el => {
+        const handler = el.getAttribute('data-on:submit');
+        if (this[handler] instanceof Function) el.addEventListener('submit', this[handler].bind(this));
+      });
+    }
       attachNestedComponents() {
       this.shadowRoot.querySelectorAll('[data-component]').forEach(el => {
         const componentName = el.getAttribute('data-component');
