@@ -3,15 +3,33 @@ import {Vis} from "./Vis.js";
 Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
-    todoList: [
-{ id: 1, text: "Fix reactivity", done: false },
-{ id: 2, text: "Implement combined VDOM and ShadowDOM", done: false },
-{ id: 2, text: "Templating Engine", done: false },
-{ id: 3, text: "Ecosystem Routing", done: false },
-{ id: 4, text: "Ecosystem Advanced State management", done: false },
-{ id: 5, text: "Ecosystem Module for remote, data cascading client update requests", done: false },
-{ id: 10, text: "Ecosystem Cross-platform native support", done: false },],
-
+todoList: [
+  { id: 1, text: "Fix CDN usage in components", done: false },
+  { id: 2, text: "Sanitize input data", done: false },
+  { id: 3, text: "Integrate XSS Protection", done: false },
+  { id: 4, text: "Implement Content Security Policy (CSP)", done: false },
+  { id: 5, text: "Develop Error Management", done: false },
+  { id: 6, text: "Implement Performance Monitoring", done: false },
+  { id: 7, text: "Write proper documentation", done: false },
+  { id: 8, text: "Implement combined VDOM and ShadowDOM", done: false },
+  { id: 9, text: "Templating Engine", done: false },
+  { id: 10, text: "Ecosystem Advanced State management", done: false },
+  { id: 11, text: "Ecosystem Module for remote, data cascading client update requests", done: false },
+  { id: 12, text: "Ecosystem Routing", done: false },
+  { id: 13, text: "Ecosystem Cross-platform native support", done: false },
+  { id: 14, text: "Make framework more efficient and smaller", done: false },
+  { id: 15, text: "Add unit tests and integration tests", done: false },
+  { id: 16, text: "Improve Error Modal design and UX", done: false },
+  { id: 17, text: "Optimize directive parsing and handling", done: false },
+  { id: 18, text: "Refactor and cleanup codebase", done: false },
+  { id: 19, text: "Create demo applications", done: false },
+  { id: 20, text: "Implement build and deployment pipeline", done: false },
+  { id: 21, text: "Gather and incorporate user feedback", done: false },
+  { id: 22, text: "Accessibility and SEO enhancements", done: false },
+  { id: 23, text: "Integrate analytics", done: false },
+  { id: 24, text: "Localization and internationalization support", done: false },
+  { id: 25, text: "Develop Plugin/Extension API", done: false }
+],
     newTodo: ""
   }),
   methods: {
@@ -93,7 +111,7 @@ toggleTodo(event) {
   },
   template: `
     <div class="todo-container">
-      <h2 >To-Do List</h2>
+      <h2 class="text-red-700" >To-Do List</h2>
       <div class="input-container">
         <form data-on:submit="addTodo">
           <input id="inputTodo" type="text"  placeholder="Add a new task"/>
@@ -332,7 +350,7 @@ Vis.Component.createComponent({
               VisJS
             </a>
           </div>
-<ul class="navbar-menu">
+<ul class="navbar-menu ">
   <li><a href="/docs/guide" data-on:click="navigate($event, '/docs')">Docs</a></li>
   <li><a href="/ecosystem" data-on:click="navigate($event, '/ecosystem')">Ecosystem</a></li>
   <li class="dropdown">
@@ -351,10 +369,11 @@ Vis.Component.createComponent({
         </div>
       </nav>
       <message-component :data="messageState"></message-component>
-
+<button class="bg-red-800"> test </button>
     </div>
   `,
   styles: `
+
     .navbar {
       background-color: RoyalBlue; /* Royal Blue */
       color: white;

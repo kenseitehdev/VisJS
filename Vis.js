@@ -1,13 +1,3 @@
-const defineCustomElement = (tagName, template) => {
-  customElements.define(tagName, class extends HTMLElement {
-    constructor() {
-      super();
-      this.attachShadow({ mode: 'open' }).innerHTML = `<template>${template}</template>`.content.cloneNode(true);
-    }connectedCallback() {
-      bindStateAndEvents(this.shadowRoot);
-    }
-  });
-};
 class manageState {
   #state = {};
   #listeners = new Set();
@@ -23,33 +13,6 @@ class manageState {
   }
 }
 const state = new manageState();
-function getCdnLinks() {
-  const cdnLinks = {
-    stylesheets: Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(link => link.href),
-    scripts: Array.from(document.querySelectorAll('script[src]')).map(script => script.src)
-  };
-  return cdnLinks;
-}
-function loadStylesheets(shadowRoot, stylesheets) {
-  stylesheets.forEach(href => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    shadowRoot.appendChild(link);
-  });
-}
-function loadScripts(shadowRoot, scripts) {
-  scripts.forEach(src => {
-    if (!loadedResources.scripts.has(src)) {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = () => console.log(`Script ${src} loaded.`);
-      script.onerror = (error) => console.error(`Failed to load script ${src}.`, error);
-      shadowRoot.appendChild(script);
-      loadedResources.scripts.add(src);
-    }
-  });
-}
 class CustomComponent extends HTMLElement {
   static observedAttributes = ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'];
 constructor() {
@@ -57,9 +20,9 @@ constructor() {
     this.attachShadow({ mode: 'open' });
     this.state = {};
     this.eventListeners = [];
-  }connectedCallback() {
+  }
+    connectedCallback() {
     this.render();
-    this.bindEvents();
     this.lifecycle?.mount?.();
   }disconnectedCallback() {
     this.lifecycle?.destroy?.();
@@ -71,15 +34,15 @@ constructor() {
   }render() {
     this.shadowRoot.innerHTML = `
       <style>${this.styles}</style>
-      ${this.template}
-    `;
+      ${this.template}`;
     this.applyDirectives();
   }applyDirectives() {
     const root = this.shadowRoot;
     ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'].forEach(attr => {
       root.querySelectorAll(`[${attr}]`).forEach(el => this[`process${attr.replace(/[^a-zA-Z]/g, '')}`]?.(el));
     });
-  }processDataFor(el) {
+  }
+    processDataFor(el) {
     const [itemPart, listName] = el.getAttribute('data-for').split(' in ').map(str => str.trim());
     const [item, index] = itemPart.includes(',') ? itemPart.split(',').map(str => str.trim()) : [itemPart, null];
     const items = this.state[listName] || [];
@@ -119,8 +82,7 @@ constructor() {
     }
   }getNestedValue(key, scope) {
     return key.split('.').reduce((acc, part) => acc?.[part], scope);
-  }bindEvents() {}
-  cleanupEffects() {
+  }cleanupEffects() {
     this.effects?.forEach(effect => effect.cleanup?.());
     this.effects = [];
   }
@@ -158,16 +120,11 @@ update: () => {
       this.prevState = { ...this.state };
       this.state = { ...this.state, ...newState };       
         this.render();
-    }resetUpdateFlag() {
-    setTimeout(() => {
-      this.lifecycle.isUpdated = false;
-    }, 0);
-  }bindEvents(){}
+    }
     connectedCallback() {
       this.render();
       this.isMounted=true;
     this.lifecycle.mount();
-      this.bindEvents();
     }disconnectedCallback() {
       this.lifecycle.destroy();
       this.removeEventListeners();
@@ -175,24 +132,8 @@ update: () => {
       this.eventListeners?.forEach(({ event, handler }) => this.removeEventListener(event, handler));
       this.eventListeners = [];
     }
-     getGlobalStyles = () => {
-  const styleSheets = Array.from(document.styleSheets);
-  let globalStyles = '';
-
-  styleSheets.forEach(sheet => {
-    try {
-      Array.from(sheet.cssRules).forEach(rule => {
-        globalStyles += rule.cssText;
-      });
-    } catch (e) {
-      console.warn('Unable to read stylesheet:', e);
-    }
-  });
-  return globalStyles;
-}
 render() {
         const style = document.createElement('style');
-    style.textContent = this.getGlobalStyles();
     this.shadowRoot.appendChild(style);
       this.shadowRoot.innerHTML= `<style>${this.styles}</style>${this.parseTemplate(template, this.state)}`;
       this.attachEventListeners();
@@ -206,12 +147,10 @@ render() {
       this.processDirectives(container, state);
       return container.innerHTML;
     }processDirectives(container, state) {
-      container.querySelectorAll('[data-for]').forEach(el => this.processVFor(el, state));
-      container.querySelectorAll('[data-if], [data-elif], [data-else]').forEach(el => this.processVIfElse(el, state));
+      container.querySelectorAll('[data-for]').forEach(el => this.processDataFor(el, state));
+      container.querySelectorAll('[data-if], [data-elif], [data-else]').forEach(el => this.processDataIfElse(el, state));
       container.querySelectorAll('[data-model]').forEach(el => this.processDataModel(el));
-    }onMount() {}
-      onUpdate() {}
-      onDestroy() {}
+    }
     processDataModel(el) {
       const model = el.getAttribute('data-model');
       if (model in this.state) {
@@ -222,7 +161,7 @@ render() {
         });
       }
     }
-    processVFor(el, state) {
+    processDataFor(el, state) {
       const vForAttr = el.getAttribute('data-for');
       if (!vForAttr) return;
       const [itemPart, listName] = vForAttr.split(' in ').map(str => str.trim());
@@ -239,7 +178,7 @@ render() {
         fragment.appendChild(itemElement);
       });
       el.replaceWith(fragment);
-    }processVIfElse(el, state) {
+    }processDataIfElse(el, state) {
       const condition = el.getAttribute('data-if') || el.getAttribute('data-elif') || el.getAttribute('data-else');
       const prevEl = el.previousElementSibling;
       const prevConditionMet = prevEl && (prevEl.hasAttribute('data-if') || prevEl.hasAttribute('data-elif'));
@@ -303,31 +242,14 @@ attachEventListeners() {
   }
   customElements.define(name, Component);
 }
-const use = (plugin, options = {}) => {
-  if (installedPlugins.includes(plugin)) {
-    console.warn('Plugin is already installed');
-    return;
-  }
-  if (typeof plugin.install === 'function') {
-    try {
-      plugin.install(Vis, options);
-    } catch (error) {
-      showError({ location: 'use', message: error.message });
-    }
-  } else {
-    console.warn('Plugin does not have an install method');
-  }
-  installedPlugins.push(plugin);
-};
 const createApp = (location, components) => { 
   const appRoot = document.getElementById(location);
-  if (!appRoot) {
-    return;
-  }components.forEach(({ name }) => {
+  if (!appRoot) return;
+    components.forEach(({ name }) => {
     try {
       appRoot.appendChild(document.createElement(name));
     } catch (error) {
-      showError({ location: "createApp", message: `Failed to create component ${name}: ${error.message}` });
+    console.error(error);
     }
   });
   return appRoot;
@@ -339,6 +261,6 @@ function sanitize(input) {
 }
 const Security = { sanitize,};
 const Component = { createComponent };
-const App = { createApp, use, state };
+const App = { createApp, state };
 const Vis = { App, Component, Security };
 export { Vis };
