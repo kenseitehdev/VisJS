@@ -15,32 +15,39 @@ class manageState {
 const state = new manageState();
 class CustomComponent extends HTMLElement {
   static observedAttributes = ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'];
-constructor() {
+static cdns = '';
+  static cdnsLoaded = false;
+  static cdnsLoadPromise = null;
+  constructor() {
     super();
     this.attachShadow({ mode: 'open' });
     this.state = {};
     this.eventListeners = [];
+      plugins.forEach(plugin => plugin(this));
   }
-    connectedCallback() {
+async connectedCallback() {
+    const style = document.createElement('style');
+    style.textContent = CustomComponent.cdns;
+    this.shadowRoot.appendChild(style);
     this.render();
-    this.lifecycle?.mount?.();
-  }disconnectedCallback() {
+    if (this.lifecycle?.mount) {
+      this.lifecycle.mount();
+    }
+  }
+ disconnectedCallback() {
     this.lifecycle?.destroy?.();
     this.cleanupEffects();
     this.removeEventListeners();
-  }removeEventListeners() {
+  }
+  removeEventListeners() {
     this.eventListeners.forEach(({ event, handler }) => this.removeEventListener(event, handler));
     this.eventListeners = [];
-  }render() {
+  }
+  render() {
     this.shadowRoot.innerHTML = `
       <style>${this.styles}</style>
       ${this.template}`;
     this.applyDirectives();
-  }applyDirectives() {
-    const root = this.shadowRoot;
-    ['data-for', 'data-if', 'data-else', 'data-bind', 'data-on\\:click'].forEach(attr => {
-      root.querySelectorAll(`[${attr}]`).forEach(el => this[`process${attr.replace(/[^a-zA-Z]/g, '')}`]?.(el));
-    });
   }
     processDataFor(el) {
     const [itemPart, listName] = el.getAttribute('data-for').split(' in ').map(str => str.trim());
@@ -87,6 +94,28 @@ constructor() {
     this.effects = [];
   }
 }
+function getAndRemoveCDNs() {
+    const cdnResources = {
+        css: [],
+        js: []
+    };
+    const links = document.querySelectorAll('link');
+    const scripts = document.querySelectorAll('script');
+    links.forEach(link => {
+        const rel = link.getAttribute('rel');
+        const href = link.getAttribute('href');
+        if (rel === 'stylesheet' && href && !href.includes('style.css')) {
+            cdnResources.css.push(href);
+        }
+    });
+    scripts.forEach(script => {
+        const src = script.getAttribute('src');
+        if (src && !src.includes('app.js') && !src.includes('script.js')) {
+            cdnResources.js.push(src);
+        }
+    });
+    return cdnResources;
+}
 function createComponent(config) {
   const { name, data, template, methods = {}, styles = "", onMount, onUpdate, onDestroy } = config;
   class Component extends HTMLElement {
@@ -114,32 +143,74 @@ update: () => {
         (typeof method === 'function') ? this[key] = method.bind(this) : console.warn(`Method ${key} is not a function and cannot be bound.`);
       });
       this.render();
-    }hasStateChanged() {
+    }
+      hasStateChanged() {
       return Object.keys(this.state).some(key => this.state[key] !== this.prevState[key]);
     }setState(newState) {
       this.prevState = { ...this.state };
       this.state = { ...this.state, ...newState };       
         this.render();
     }
-    connectedCallback() {
-      this.render();
-      this.isMounted=true;
-    this.lifecycle.mount();
-    }disconnectedCallback() {
-      this.lifecycle.destroy();
-      this.removeEventListeners();
-    }removeEventListeners() {
-      this.eventListeners?.forEach(({ event, handler }) => this.removeEventListener(event, handler));
-      this.eventListeners = [];
-    }
-render() {
-        const style = document.createElement('style');
+async connectedCallback() {
+    this.classList.add('hidden');
+    const style = document.createElement('style');
+    style.textContent = CustomComponent.cdns;
     this.shadowRoot.appendChild(style);
-      this.shadowRoot.innerHTML= `<style>${this.styles}</style>${this.parseTemplate(template, this.state)}`;
-      this.attachEventListeners();
-      this.attachNestedComponents();
-      this.lifecycle.update();
-    }parseTemplate(template, state) {
+    this.classList.remove('hidden');
+    if (this.lifecycle?.mount) {
+        this.lifecycle.mount();
+    }
+}
+async render() {
+    const cdnLists = getAndRemoveCDNs();
+    this.shadowRoot.innerHTML = '';
+    const cssPromises = cdnLists.css
+        .filter(url => url.endsWith('.css'))
+        .map(url =>
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to fetch CSS: ${url}`);
+                    return response.text();
+                })
+                .catch(error => {
+                    console.error(`Failed to fetch CSS from ${url}:`, error);
+                    return '';
+                })
+        );
+    const cssResults = await Promise.all(cssPromises);
+    cssResults.forEach(css => {
+        if (css) { 
+            const style = document.createElement('style');
+            style.textContent = css;
+            this.shadowRoot.appendChild(style);
+        }
+    });
+    const jsPromises = cdnLists.js
+        .filter(url => url.endsWith('.js')) 
+        .map(url =>
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error(`Failed to fetch JS: ${url}`);
+                    return response.text();
+                })
+                .then(scriptContent => {
+                    const script = document.createElement('script');
+                    script.textContent = scriptContent;
+                    document.head.appendChild(script);
+                })
+                .catch(error => {
+                    console.error(`Failed to fetch JS from ${url}:`, error);
+                })
+        );
+    await Promise.all(jsPromises);
+    this.shadowRoot.innerHTML += `<style>${this.styles}</style>${this.parseTemplate(template, this.state)}`;
+    this.attachEventListeners();
+    this.attachNestedComponents();
+    if (this.lifecycle && this.lifecycle.update) {
+        this.lifecycle.update();
+    }
+}
+    parseTemplate(template, state) {
       const container = document.createElement('div');
       container.innerHTML = template.trim().replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => {
         return this.getNestedValue(key, state) ?? match;
@@ -157,7 +228,6 @@ render() {
         el.value = this.state[model];
         el.addEventListener('input', () => {
           this.state[model] = el.value;
-          this.render();
         });
       }
     }
@@ -248,19 +318,25 @@ const createApp = (location, components) => {
     components.forEach(({ name }) => {
     try {
       appRoot.appendChild(document.createElement(name));
+      appRoot.stateManager = state;
     } catch (error) {
     console.error(error);
     }
   });
   return appRoot;
 };
-function sanitize(input) {
-   const element = document.createElement('template');
-    element.innerText = input;
-    return element.innerHTML;  
+const plugins = [];
+function use(plugin) {
+  if (typeof plugin === 'function') {
+    plugins.push(plugin);
+  } else {
+    console.warn('Plugin should be a function');
+  }
 }
-const Security = { sanitize,};
-const Component = { createComponent };
-const App = { createApp, state };
-const Vis = { App, Component, Security };
+function sanitize(input) {
+  const element = document.createElement('div');
+  element.textContent = input;
+  return element.innerHTML;
+}
+const Vis={App:{createApp,use},Component:{createComponent},Security:{sanitize,}};
 export { Vis };

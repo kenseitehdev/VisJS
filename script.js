@@ -4,31 +4,19 @@ Vis.Component.createComponent({
   name: 'todo-list',
   data: () => ({
 todoList: [
-  { id: 1, text: "Fix CDN usage in components", done: false },
-  { id: 2, text: "Sanitize input data", done: false },
-  { id: 3, text: "Integrate XSS Protection", done: false },
-  { id: 4, text: "Implement Content Security Policy (CSP)", done: false },
-  { id: 5, text: "Develop Error Management", done: false },
-  { id: 6, text: "Implement Performance Monitoring", done: false },
-  { id: 7, text: "Write proper documentation", done: false },
-  { id: 8, text: "Implement combined VDOM and ShadowDOM", done: false },
-  { id: 9, text: "Templating Engine", done: false },
-  { id: 10, text: "Ecosystem Advanced State management", done: false },
-  { id: 11, text: "Ecosystem Module for remote, data cascading client update requests", done: false },
-  { id: 12, text: "Ecosystem Routing", done: false },
-  { id: 13, text: "Ecosystem Cross-platform native support", done: false },
-  { id: 14, text: "Make framework more efficient and smaller", done: false },
-  { id: 15, text: "Add unit tests and integration tests", done: false },
-  { id: 16, text: "Improve Error Modal design and UX", done: false },
-  { id: 17, text: "Optimize directive parsing and handling", done: false },
-  { id: 18, text: "Refactor and cleanup codebase", done: false },
-  { id: 19, text: "Create demo applications", done: false },
-  { id: 20, text: "Implement build and deployment pipeline", done: false },
-  { id: 21, text: "Gather and incorporate user feedback", done: false },
-  { id: 22, text: "Accessibility and SEO enhancements", done: false },
-  { id: 23, text: "Integrate analytics", done: false },
-  { id: 24, text: "Localization and internationalization support", done: false },
-  { id: 25, text: "Develop Plugin/Extension API", done: false }
+
+  { id: 1, header: "Vis.Component.createComponent", text:"Templating Engine", done: false },
+  { id: 2, header: "Vis.Component.createComponent ", text:"Optimize directive parsing and handling", done: false },
+
+  { id: 3, header: "Vis.Security.xss", text:"Integrate XSS Protection", done: false },
+  { id: 4, header: "Vis.Security.csp", text:"Implement Content Security Policy", done: false },
+  { id: 5, header: "Vis.Debug.error", text:"Develop Error Management", done: false },
+  { id: 6, header: "Vis.Debug ", text:"Improve Error Modal design and UX", done: false },
+  { id: 7, header: "Vis.Debug.test ", text:"Add unit tests and integration tests", done: false },
+
+  { id: 8, header: "Ecosystem", text:"Module for remote, data cascading client update requests", done: false },
+  { id: 9, header: "Ecosystem", text:"Routing", done: false },
+  { id: 10, header: "Ecosystem", text:"Cross-platform native support", done: false },
 ],
     newTodo: ""
   }),
@@ -42,16 +30,15 @@ addTodo(event) {
     event.preventDefault();
     try {
         const form = event.target;
-        console.log(form);
         const inputField = form.querySelector('input[id="inputTodo"]');
         const newTodoText = inputField.value.trim();
         if (newTodoText) {
             this.state.todoList.push({
                 id: this.state.todoList.length + 1,
+                header: "new item",
                 text: newTodoText,
                 done: false
             });
-            console.log(this.state.todoList);
             this.state.newTodo = "";
             inputField.value = "";
             this.render();
@@ -92,18 +79,6 @@ toggleTodo(event) {
         console.error('ID is undefined');
       }
     },
-    showAllTodos() {
-      this.state.filter = 'all';
-      this.render();
-    },
-    showActiveTodos() {
-      this.state.filter = 'active';
-      this.render();
-    },
-    showCompletedTodos() {
-      this.state.filter = 'completed';
-      this.render();
-    },
     handleInputChange(event) {
       console.log('Input change event:', event);
       this.state.newTodo = event.target.value;
@@ -111,58 +86,86 @@ toggleTodo(event) {
   },
   template: `
     <div class="todo-container">
-      <h2 class="text-red-700" >To-Do List</h2>
+      <h2  >To-Do List</h2>
       <div class="input-container">
         <form data-on:submit="addTodo">
           <input id="inputTodo" type="text"  placeholder="Add a new task"/>
-          <button type="submit">Add</button>
+          <button type="submit" class="bg-blue-800 text-white px-8 rounded-lg py-2">Add</button>
         </form>
       </div>
-      <ul class="todo-list">
-    <li class="todo-item" data-for="(todo, index) in todoList" :key="todo.id">
-    {{ todo.id  }}.       <input type="checkbox" data-id="{{ todo.id }}" data-if="{{ todo.done }}" checked data-on:click="toggleTodo" /> 
-          <input type="checkbox" data-id="{{ todo.id }}"  data-else data-on:click="toggleTodo" /> 
-          <span :class="{ 'done': todo.done }">{{ todo.text }}</span>
-          <button data-on:click="() => deleteTodo(index)" class="delete-button">Delete</button>
-        </li>
-      </ul>
+<ul class="todo-list">
+  <li class="todo-item" data-for="(todo, index) in todoList" :key="todo.id">
+    {{ todo.id }}.
+    <input
+      type="checkbox"
+      data-id="{{ todo.id }}"
+      data-if="{{ todo.done }}"
+      checked
+class="p-4"
+      data-on:click="toggleTodo"
+    />
+    <input
+      type="checkbox"
+      data-id="{{ todo.id }}"
+      data-else
+    class="p-4"
+      data-on:click="toggleTodo"
+    />
+    <div class="todo-content">
+      <span class="todo-header" :class="{ 'done': todo.done }">
+        <b>{{ todo.header }}</b>
+      </span>
+      <span class="todo-text">
+        {{ todo.text }}
+      </span>
+    </div>
+    <button
+      data-on:click="() => deleteTodo(index)"
+      class="delete-button"
+    >
+      ❌
+    </button>
+  </li>
+</ul>
     </div>
   `,
   styles: `
+.todo-content {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.todo-header {
+  flex: 1;
+  margin-right: 2em;
+}
+
+.todo-text {
+  flex: 1;
+}
+
     form {
         width: 100%;
     }
     .todo-container {
-      max-width: 400px;
+      max-width: 80%;
       margin: 0 auto;
       padding: 16px;
       font-family: Arial, sans-serif;
     }
     h2 {
       margin-top: 0;
-    }
-    .input-container {
-      display: flex;
-      margin-bottom: 16px;
-      width: 100%;
+        font-size:large;
+        font-weight:bold!important;
     }
     input[type="text"] {
-      width: 80%;
+      width: 88%;
       padding: 8px 0;
       margin-right: 8px;
+        margin-bottom:20px;
       border: 1px solid #ddd;
       border-radius: 4px;
-    }
-    button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
     }
     .todo-list {
       list-style-type: none;
@@ -187,10 +190,8 @@ toggleTodo(event) {
     }
     .delete-button {
       margin-left: auto;
-      background-color: #dc3545;
-    }
-    .delete-button:hover {
-      background-color: #c82333;
+      color: #dc3545;
+        background-color:rgba(0,0,0,0);
     }
   `
 });
@@ -198,7 +199,6 @@ Vis.Component.createComponent({
   name: 'message-component',
   data: () => ({
     showAlert: true,
-      projectName: ''
   }),
   methods: {
     handleStartClick() {
@@ -216,10 +216,10 @@ Vis.Component.createComponent({
       },
   },
   template: `
-    <div class="container">
-      <div class="logo">
+    <div class="mx-auto">
+      <div class="">
        
-    <svg width="700" height="700" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <svg width="800"class="justify-content-center mx-auto " viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
           <style>
             .background { fill: white; opacity: 0.2; }
             .icon { fill: royalblue; }
@@ -230,77 +230,23 @@ Vis.Component.createComponent({
           <path class="accent" d="M25 25 L50 50 L75 25 Z" />
         </svg>
       </div>
-      <div class="title">Welcome to Your VisJS App</div>
-      <div class="description">Edit <code> src/app.js </code> to start</div>
+      <div class="title text-center my-12">Welcome to Your VisJS App</div>
+      <div class="description w-full text-center mx-auto my-12">Edit <code> src/app.js </code> to start</div>
       </div>
     <todo-list></todo-list>
     </div>
   `,
   styles: `
-    ul{
-        list-style:none;
-    }
-    .container .logo{
-        display:flex;
-        justify-content:center;
-        align-items:center;
-    }
-    .container .description{
-
-        display:flex;
-        justify-content:center;
-        align-items:center;
-    }
-    .container .title{
-      justify-content:flex-start;
-        align-items:center;
-        text-align:center;
-      margin:auto;
-      padding:0px;
-    }
     .title {
       font-size: 36px;
       font-weight: bold;
-      margin: 10px 0;
       color: royalblue;
+        text-align:center;
     }
     .description {
       font-size: 20px;
       color: #666;
-    }
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-    .button {
-      padding: 15px 30px;
-      border: 2px solid royalblue;
-      border-radius: 5px;
-      background-color: royalblue;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      margin: 30px 20px;
-      transition: background-color 0.3s ease, border 0.3s ease, color 0.3s ease;
-    }
-    .button:hover {
-      background-color: darkblue;
-    }
-    .button-outline {
-      padding: 8px 16px;
-      border: 2px solid royalblue;
-      border-radius: 5px;
-      color: royalblue;
-      background-color: white;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 20px 0;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    .button-outline:hover {
-      background-color: royalblue;
-      color: white;
+        text-align:center;
     }
 code{
     margin:20px;
@@ -369,7 +315,6 @@ Vis.Component.createComponent({
         </div>
       </nav>
       <message-component :data="messageState"></message-component>
-<button class="bg-red-800"> test </button>
     </div>
   `,
   styles: `
